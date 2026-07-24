@@ -1,7 +1,0 @@
-/home/BADM/Private/Uni Projects/PDSA/CodeScope/CodeScope/codescope-backend/src/main/java/com/codscope/codescope_backend/CodescopeBackendApplication.java
-/home/BADM/Private/Uni Projects/PDSA/CodeScope/CodeScope/codescope-backend/src/main/java/com/codscope/codescope_backend/controller/ClassSearchController.java
-/home/BADM/Private/Uni Projects/PDSA/CodeScope/CodeScope/codescope-backend/src/main/java/com/codscope/codescope_backend/datastructure/AVLNode.java
-/home/BADM/Private/Uni Projects/PDSA/CodeScope/CodeScope/codescope-backend/src/main/java/com/codscope/codescope_backend/datastructure/AVLTree.java
-/home/BADM/Private/Uni Projects/PDSA/CodeScope/CodeScope/codescope-backend/src/main/java/com/codscope/codescope_backend/model/ClassInfo.java
-/home/BADM/Private/Uni Projects/PDSA/CodeScope/CodeScope/codescope-backend/src/main/java/com/codscope/codescope_backend/scanner/JavaCodeScanner.java
-/home/BADM/Private/Uni Projects/PDSA/CodeScope/CodeScope/codescope-backend/src/main/java/com/codscope/codescope_backend/service/ClassSearchService.java
