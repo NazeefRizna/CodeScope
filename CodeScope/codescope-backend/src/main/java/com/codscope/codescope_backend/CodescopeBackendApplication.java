@@ -7,6 +7,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.util.List;
+import com.codscope.codescope_backend.graph.Graph;
 
 @SpringBootApplication
 public class CodescopeBackendApplication implements CommandLineRunner {
@@ -18,15 +19,17 @@ public class CodescopeBackendApplication implements CommandLineRunner {
     @Override
     public void run(String... args) {
 
-        String projectPath = "C:/Users/nazee/Desktop/Co";
+        String projectPath = "C:/Users/nazee/Desktop/CodeScope 2";
 
         JavaCodeScanner scanner = new JavaCodeScanner();
 
-        System.out.println("\nScanning project: " + projectPath);
+        System.out.println("Scanning project: " + projectPath);
 
         List<ClassInfo> classes = scanner.scanProject(projectPath);
 
-        System.out.println("\n ---CLASSES FOUND---\n");
+        Graph graph = new Graph();
+
+        System.out.println(" \n---CLASSES FOUND---\n");
 
         if (classes.isEmpty()) {
             System.out.println("No Java classes were found.");
@@ -42,6 +45,12 @@ public class CodescopeBackendApplication implements CommandLineRunner {
             System.out.println("-----------------------------------");
         }
 
-        System.out.println("\nTotal Classes Found : " + classes.size());
+        System.out.println("Total Classes Found : " + classes.size());
+
+        for (ClassInfo classInfo : classes) {
+            graph.addClass(classInfo);
+        }
+
+        graph.displayGraph();
     }
 }
