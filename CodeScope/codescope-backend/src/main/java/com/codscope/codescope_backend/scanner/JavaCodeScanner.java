@@ -1,5 +1,6 @@
 package com.codscope.codescope_backend.scanner;
 
+import com.codscope.codescope_backend.graph.Graph;
 import com.codscope.codescope_backend.model.ClassInfo;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
@@ -9,6 +10,13 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.regex.Pattern;
 
 public class JavaCodeScanner {
 
@@ -33,6 +41,13 @@ public class JavaCodeScanner {
         scanDirectory(root);
 
         return scannedClasses;
+    }
+
+    public void buildDependencies(List<ClassInfo> classes,
+                                  Graph graph) {
+
+        graph.createNodes(classes);
+        detectDependencies(classes, graph);
     }
 
     private void scanDirectory(File directory) {
@@ -93,5 +108,94 @@ public class JavaCodeScanner {
             System.out.println("Cannot parse file : " + file.getAbsolutePath());
 
         }
+    }
+
+    private void detectDependencies(List<ClassInfo> scannedClasses,
+                                    Graph graph) {
+
+        for (ClassInfo sourceClass : scannedClasses) {
+
+            try {
+                String sourceCode = Files.readString(
+                        Path.of(sourceClass.getFilePath())
+                );
+
+                // Remove comments to reduce incorrect matches
+                sourceCode = removeComments(sourceCode);
+
+                for (ClassInfo possibleDependency : scannedClasses) {
+
+                    // A class should not depend on itself
+                    if (sourceClass.getFullClassName()
+                            .equals(possibleDependency.getFullClassName())) {
+
+                        continue;
+                    }
+
+                    if (usesClass(sourceCode, possibleDependency)) {
+
+                        graph.addDependency(
+                                sourceClass.getFullClassName(),
+                                possibleDependency.getFullClassName()
+                        );
+
+                        System.out.println(
+                                "Dependency found: " +
+                                        sourceClass.getClassName() +
+                                        " → " +
+                                        possibleDependency.getClassName()
+                        );
+                    }
+                }
+
+            } catch (IOException exception) {
+
+                System.out.println(
+                        "Could not read file: " +
+                                sourceClass.getFilePath()
+                );
+            }
+        }
+    }
+
+    private boolean usesClass(String sourceCode,
+                              ClassInfo possibleDependency) {
+
+        String simpleClassName =
+                possibleDependency.getClassName();
+
+        String fullClassName =
+                possibleDependency.getFullClassName();
+
+        String simpleNamePattern =
+                "\\b" + Pattern.quote(simpleClassName) + "\\b";
+
+        String fullNamePattern =
+                "\\b" + Pattern.quote(fullClassName) + "\\b";
+
+        return Pattern.compile(simpleNamePattern)
+                .matcher(sourceCode)
+                .find()
+                ||
+                Pattern.compile(fullNamePattern)
+                        .matcher(sourceCode)
+                        .find();
+    }
+
+    private String removeComments(String sourceCode) {
+
+        // Remove block comments
+        sourceCode = sourceCode.replaceAll(
+                "(?s)/\\*.*?\\*/",
+                ""
+        );
+
+        // Remove single-line comments
+        sourceCode = sourceCode.replaceAll(
+                "//.*",
+                ""
+        );
+
+        return sourceCode;
     }
 }

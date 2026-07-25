@@ -51,6 +51,11 @@ public class CodescopeBackendApplication implements CommandLineRunner {
             graph.addClass(classInfo);
         }
 
+        scanner.buildDependencies(
+                classes,
+                graph
+        );
+
         graph.displayGraph();
     }
 }

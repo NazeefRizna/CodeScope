@@ -1,33 +1,73 @@
-package com.codscope.codescope_backend.graph;
+package com.codscope.codescope_backend.graph ;
 
 import com.codscope.codescope_backend.model.ClassInfo;
-import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.List;
 
-@Component
 public class Graph {
 
-    private ArrayList<GraphNode> nodes;
+    private final ArrayList<GraphNode> nodes;
 
     public Graph() {
         nodes = new ArrayList<>();
     }
 
+    public void createNodes(List<ClassInfo> scannedClasses) {
+
+        for (ClassInfo classInfo : scannedClasses) {
+            addClass(classInfo);
+        }
+    }
+
     public void addClass(ClassInfo classInfo) {
 
-        if (!containsClass(classInfo.getClassName())) {
+        if (classInfo == null) {
+            return;
+        }
+
+        if (!containsClass(classInfo.getFullClassName())) {
             nodes.add(new GraphNode(classInfo));
         }
     }
 
+    public boolean addDependency(String sourceClassName,
+                                 String destinationClassName) {
+
+        GraphNode sourceNode = getNode(sourceClassName);
+        GraphNode destinationNode = getNode(destinationClassName);
+
+        if (sourceNode == null || destinationNode == null) {
+            return false;
+        }
+
+        boolean added = sourceNode.addDependency(destinationNode);
+
+        if (added) {
+            sourceNode.getClassInfo().setOutgoingDependencies(
+                    sourceNode.getClassInfo().getOutgoingDependencies() + 1
+            );
+
+            destinationNode.getClassInfo().setIncomingDependencies(
+                    destinationNode.getClassInfo().getIncomingDependencies() + 1
+            );
+        }
+
+        return added;
+    }
+
     public GraphNode getNode(String className) {
+
+        if (className == null) {
+            return null;
+        }
 
         for (GraphNode node : nodes) {
 
-            if (node.getClassInfo()
-                    .getClassName()
-                    .equals(className)) {
+            ClassInfo info = node.getClassInfo();
+
+            if (info.getClassName().equals(className) ||
+                    info.getFullClassName().equals(className)) {
 
                 return node;
             }
@@ -46,18 +86,36 @@ public class Graph {
 
     public void displayGraph() {
 
-        System.out.println("\n-----GRAPH-----\n");
+        System.out.println("\n----- DEPENDENCY GRAPH -----\n");
 
         for (GraphNode node : nodes) {
 
-            ClassInfo info = node.getClassInfo();
+            System.out.print(
+                    node.getClassInfo().getClassName() + " → "
+            );
 
-            System.out.println("Class      : " + info.getClassName());
-            System.out.println("Package    : " + info.getPackageName());
-            System.out.println("File Path  : " + info.getFilePath());
-            System.out.println("-----------------------------------");
+            if (node.getDependencies().isEmpty()) {
+                System.out.println("No dependencies");
+                continue;
+            }
+
+            for (int i = 0;
+                 i < node.getDependencies().size();
+                 i++) {
+
+                GraphNode dependency =
+                        node.getDependencies().get(i);
+
+                System.out.print(
+                        dependency.getClassInfo().getClassName()
+                );
+
+                if (i < node.getDependencies().size() - 1) {
+                    System.out.print(", ");
+                }
+            }
+
+            System.out.println();
         }
-
-        System.out.println("Total Nodes : " + nodes.size());
     }
 }

@@ -72,4 +72,8 @@ public class ClassInfo {
         return className;
     }
 
+    public String getFullClassName() {
+        return packageName + "." + className;
+    }
+
 }
