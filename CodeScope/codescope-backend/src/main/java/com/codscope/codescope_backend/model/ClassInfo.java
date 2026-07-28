@@ -76,4 +76,11 @@ public class ClassInfo {
         return packageName + "." + className;
     }
 
+    public void incrementIncomingDependencies() {
+        incomingDependencies++;
+    }
+
+    public void incrementOutgoingDependencies() {
+        outgoingDependencies++;
+    }
 }

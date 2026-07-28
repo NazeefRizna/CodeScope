@@ -41,16 +41,18 @@ public class Graph {
             return false;
         }
 
-        boolean added = sourceNode.addDependency(destinationNode);
+        boolean added =
+                sourceNode.addDependency(destinationNode);
 
         if (added) {
-            sourceNode.getClassInfo().setOutgoingDependencies(
-                    sourceNode.getClassInfo().getOutgoingDependencies() + 1
-            );
 
-            destinationNode.getClassInfo().setIncomingDependencies(
-                    destinationNode.getClassInfo().getIncomingDependencies() + 1
-            );
+            sourceNode
+                    .getClassInfo()
+                    .incrementOutgoingDependencies();
+
+            destinationNode
+                    .getClassInfo()
+                    .incrementIncomingDependencies();
         }
 
         return added;
@@ -116,6 +118,36 @@ public class Graph {
             }
 
             System.out.println();
+        }
+    }
+
+    public void displayDependencyCounts() {
+
+        System.out.println(
+                "\n----- DEPENDENCY COUNTS -----\n"
+        );
+
+        for (GraphNode node : nodes) {
+
+            ClassInfo info = node.getClassInfo();
+
+            System.out.println(
+                    "Class      : " + info.getClassName()
+            );
+
+            System.out.println(
+                    "Incoming   : " +
+                            info.getIncomingDependencies()
+            );
+
+            System.out.println(
+                    "Outgoing   : " +
+                            info.getOutgoingDependencies()
+            );
+
+            System.out.println(
+                    "-----------------------------------"
+            );
         }
     }
 }

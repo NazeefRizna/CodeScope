@@ -57,5 +57,6 @@ public class CodescopeBackendApplication implements CommandLineRunner {
         );
 
         graph.displayGraph();
+        graph.displayDependencyCounts();
     }
 }
