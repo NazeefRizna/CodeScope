@@ -150,4 +150,44 @@ public class Graph {
             );
         }
     }
+
+    public void depthFirstSearch(String startClassName) {
+
+        GraphNode startNode = getNode(startClassName);
+
+        if (startNode == null) {
+
+            System.out.println("Class not found.");
+            return;
+        }
+
+        ArrayList<GraphNode> visited = new ArrayList<>();
+
+        System.out.println("\n----- DFS Traversal -----\n");
+
+        dfsRecursive(startNode, visited);
+
+        System.out.println();
+    }
+
+    private void dfsRecursive(GraphNode current,
+                              ArrayList<GraphNode> visited) {
+
+        visited.add(current);
+
+        System.out.println(
+                current.getClassInfo().getClassName()
+        );
+
+        for (GraphNode neighbour : current.getDependencies()) {
+
+            if (!visited.contains(neighbour)) {
+
+                dfsRecursive(neighbour, visited);
+
+            }
+
+        }
+
+    }
 }
