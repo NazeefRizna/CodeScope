@@ -40,4 +40,16 @@ public class NavigationHistory {
 
     }
 
+    public int totalVisited() {
+
+        return history.getSize();
+
+    }
+
+    public void clear() {
+
+        history.clearHistory();
+
+    }
+
 }
