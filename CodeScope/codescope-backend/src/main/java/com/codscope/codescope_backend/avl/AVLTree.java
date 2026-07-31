@@ -25,8 +25,8 @@ public class AVLTree {
             return new AVLNode(classInfo);
         }
 
-        int comparison = classInfo.getClassName()
-                .compareTo(node.getClassInfo().getClassName());
+        int comparison = classInfo.getFullClassName()
+                .compareTo(node.getClassInfo().getFullClassName());
 
         if (comparison < 0) {
             node.setLeft(insertNode(node.getLeft(), classInfo));
@@ -43,6 +43,10 @@ public class AVLTree {
 
     public ClassInfo search(String className) {
 
+        if (className == null || className.isBlank()) {
+            return null;
+        }
+
         AVLNode result = searchNode(root, className);
 
         return result == null ? null : result.getClassInfo();
@@ -54,7 +58,7 @@ public class AVLTree {
             return null;
         }
 
-        int comparison = className.compareTo(node.getClassInfo().getClassName());
+        int comparison = className.compareTo(node.getClassInfo().getFullClassName());
 
         if (comparison == 0) {
             return node;
@@ -70,6 +74,11 @@ public class AVLTree {
     }
 
     public void delete(String className) {
+
+        if (className == null || className.isBlank()) {
+            return;
+        }
+
         root = deleteNode(root, className);
     }
 
@@ -79,7 +88,7 @@ public class AVLTree {
             return null;
         }
 
-        int comparison = className.compareTo(node.getClassInfo().getClassName());
+        int comparison = className.compareTo(node.getClassInfo().getFullClassName());
 
         if (comparison < 0) {
             node.setLeft(deleteNode(node.getLeft(), className));
@@ -98,7 +107,7 @@ public class AVLTree {
             AVLNode replacement = new AVLNode(successor.getClassInfo());
             replacement.setLeft(node.getLeft());
             replacement.setRight(
-                    deleteNode(node.getRight(), successor.getClassInfo().getClassName())
+                    deleteNode(node.getRight(), successor.getClassInfo().getFullClassName())
             );
 
             node = replacement;
