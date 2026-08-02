@@ -25,8 +25,8 @@ public class AVLTree {
             return new AVLNode(classInfo);
         }
 
-        int comparison = classInfo.getFullClassName()
-                .compareTo(node.getClassInfo().getFullClassName());
+        int comparison = classInfo.getClassName()
+                .compareTo(node.getClassInfo().getClassName());
 
         if (comparison < 0) {
             node.setLeft(insertNode(node.getLeft(), classInfo));
@@ -58,7 +58,9 @@ public class AVLTree {
             return null;
         }
 
-        int comparison = className.compareTo(node.getClassInfo().getFullClassName());
+        int comparison = className.compareTo(
+                node.getClassInfo().getClassName()
+        );
 
         if (comparison == 0) {
             return node;
@@ -88,7 +90,9 @@ public class AVLTree {
             return null;
         }
 
-        int comparison = className.compareTo(node.getClassInfo().getFullClassName());
+        int comparison = className.compareTo(
+                node.getClassInfo().getClassName()
+        );
 
         if (comparison < 0) {
             node.setLeft(deleteNode(node.getLeft(), className));
@@ -104,10 +108,16 @@ public class AVLTree {
 
             AVLNode successor = getMinNode(node.getRight());
 
-            AVLNode replacement = new AVLNode(successor.getClassInfo());
+            AVLNode replacement =
+                    new AVLNode(successor.getClassInfo());
+
             replacement.setLeft(node.getLeft());
+
             replacement.setRight(
-                    deleteNode(node.getRight(), successor.getClassInfo().getFullClassName())
+                    deleteNode(
+                            node.getRight(),
+                            successor.getClassInfo().getClassName()
+                    )
             );
 
             node = replacement;
@@ -128,7 +138,12 @@ public class AVLTree {
     }
 
     private void updateHeight(AVLNode node) {
-        node.setHeight(1 + Math.max(getHeight(node.getLeft()), getHeight(node.getRight())));
+        node.setHeight(
+                1 + Math.max(
+                        getHeight(node.getLeft()),
+                        getHeight(node.getRight())
+                )
+        );
     }
 
     private int getHeight(AVLNode node) {
@@ -136,7 +151,10 @@ public class AVLTree {
     }
 
     private int getBalanceFactor(AVLNode node) {
-        return node == null ? 0 : getHeight(node.getLeft()) - getHeight(node.getRight());
+        return node == null
+                ? 0
+                : getHeight(node.getLeft())
+                - getHeight(node.getRight());
     }
 
     private AVLNode balance(AVLNode node) {
@@ -146,7 +164,9 @@ public class AVLTree {
         if (balanceFactor > 1) {
 
             if (getBalanceFactor(node.getLeft()) < 0) {
-                node.setLeft(rotateLeft(node.getLeft()));
+                node.setLeft(
+                        rotateLeft(node.getLeft())
+                );
             }
 
             return rotateRight(node);
@@ -155,7 +175,9 @@ public class AVLTree {
         if (balanceFactor < -1) {
 
             if (getBalanceFactor(node.getRight()) > 0) {
-                node.setRight(rotateRight(node.getRight()));
+                node.setRight(
+                        rotateRight(node.getRight())
+                );
             }
 
             return rotateLeft(node);
@@ -194,7 +216,9 @@ public class AVLTree {
 
     public void displayInOrder() {
 
-        System.out.println("\n----- AVL TREE (SORTED BY CLASS NAME) -----\n");
+        System.out.println(
+                "\n----- AVL TREE (SORTED BY CLASS NAME) -----\n"
+        );
 
         inOrder(root);
     }
@@ -208,8 +232,10 @@ public class AVLTree {
         inOrder(node.getLeft());
 
         System.out.println(
-                node.getClassInfo().getClassName() +
-                        "  (" + node.getClassInfo().getPackageName() + ")"
+                node.getClassInfo().getClassName()
+                        + "  ("
+                        + node.getClassInfo().getPackageName()
+                        + ")"
         );
 
         inOrder(node.getRight());
