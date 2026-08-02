@@ -130,12 +130,65 @@ public class CodeScopeService {
     // Component Risk Index
     private void calculateComponentRiskIndexes() {
 
+        int totalClasses = scannedClasses.size();
+
+        int maxIncoming = 0;
+        int maxOutgoing = 0;
+        int maxCbo = 0;
+
         for (ClassInfo classInfo : scannedClasses) {
 
-            double riskScore =
-                    calculateComponentRiskIndex(classInfo);
+            int incoming = classInfo.getIncomingDependencies();
+            int outgoing = classInfo.getOutgoingDependencies();
+            int cbo = incoming + outgoing;
 
-            classInfo.setComponentRiskIndex(riskScore);
+            maxIncoming = Math.max(maxIncoming, incoming);
+            maxOutgoing = Math.max(maxOutgoing, outgoing);
+            maxCbo = Math.max(maxCbo, cbo);
+        }
+
+        for (ClassInfo classInfo : scannedClasses) {
+
+            int incoming = classInfo.getIncomingDependencies();
+            int outgoing = classInfo.getOutgoingDependencies();
+            int cbo = incoming + outgoing;
+
+            int affectedCount =
+                    graph.getAffectedClassCount(
+                            classInfo.getClassName()
+                    );
+
+            double normalizedIncoming =
+                    maxIncoming == 0
+                            ? 0
+                            : (double) incoming / maxIncoming;
+
+            double normalizedOutgoing =
+                    maxOutgoing == 0
+                            ? 0
+                            : (double) outgoing / maxOutgoing;
+
+            double normalizedCbo =
+                    maxCbo == 0
+                            ? 0
+                            : (double) cbo / maxCbo;
+
+            double normalizedReach =
+                    totalClasses <= 1
+                            ? 0
+                            : (double) affectedCount
+                            / (totalClasses - 1);
+
+            double cri = 100 * (
+                    (0.45 * normalizedIncoming)
+                            + (0.30 * normalizedReach)
+                            + (0.15 * normalizedOutgoing)
+                            + (0.10 * normalizedCbo)
+            );
+
+            cri = Math.round(cri * 100.0) / 100.0;
+
+            classInfo.setComponentRiskIndex(cri);
         }
     }
 
