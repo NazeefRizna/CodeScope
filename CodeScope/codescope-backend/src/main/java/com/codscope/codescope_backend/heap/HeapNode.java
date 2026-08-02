@@ -31,6 +31,8 @@ public class HeapNode {
     public void setRiskScore(double riskScore) {
         validateRiskScore(riskScore);
         this.riskScore = riskScore;
+        this.classInfo.setComponentRiskIndex(this.riskScore);
+
     }
 
     private void validateRiskScore(double riskScore) {
