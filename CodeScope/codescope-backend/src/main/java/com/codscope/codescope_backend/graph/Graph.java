@@ -112,10 +112,8 @@ public class Graph {
         nodes.clear();
     }
 
-    // --------------------------------------------------
-    // Return graph nodes and edges for the controller
-    // --------------------------------------------------
 
+    // Return graph nodes and edges
     public GraphData getGraphData() {
 
         List<ClassInfo> nodeData = new ArrayList<>();
@@ -142,10 +140,7 @@ public class Graph {
         return new GraphData(nodeData, edgeData);
     }
 
-    // --------------------------------------------------
     // Return dependency counts
-    // --------------------------------------------------
-
     public List<ClassInfo> getDependencyCounts() {
 
         List<ClassInfo> results = new ArrayList<>();
@@ -157,10 +152,7 @@ public class Graph {
         return results;
     }
 
-    // --------------------------------------------------
     // DFS returning data
-    // --------------------------------------------------
-
     public List<ClassInfo> depthFirstSearch(
             String startClassName
     ) {
@@ -206,10 +198,7 @@ public class Graph {
         }
     }
 
-    // --------------------------------------------------
     // BFS returning data
-    // --------------------------------------------------
-
     public List<ClassInfo> breadthFirstSearch(
             String startClassName
     ) {
@@ -257,10 +246,8 @@ public class Graph {
         return traversalResult;
     }
 
-    // --------------------------------------------------
-    // Impact analysis returning data
-    // --------------------------------------------------
 
+    // Impact analysis returning data
     public List<ImpactResult> impactAnalysis(
             String changedClassName
     ) {
@@ -288,6 +275,52 @@ public class Graph {
         );
 
         return results;
+    }
+
+    public int getAffectedClassCount(String className) {
+
+        GraphNode changedNode = getNode(className);
+
+        if (changedNode == null) {
+            return 0;
+        }
+
+        ArrayList<GraphNode> visited = new ArrayList<>();
+
+        visited.add(changedNode);
+
+        countAffectedClasses(
+                changedNode,
+                visited
+        );
+
+        // Subtract the original changed class
+        return visited.size() - 1;
+    }
+
+    private void countAffectedClasses(
+            GraphNode changedNode,
+            ArrayList<GraphNode> visited
+    ) {
+
+        for (GraphNode possibleAffectedNode : nodes) {
+
+            boolean dependsOnChangedNode =
+                    possibleAffectedNode
+                            .getDependencies()
+                            .contains(changedNode);
+
+            if (dependsOnChangedNode
+                    && !visited.contains(possibleAffectedNode)) {
+
+                visited.add(possibleAffectedNode);
+
+                countAffectedClasses(
+                        possibleAffectedNode,
+                        visited
+                );
+            }
+        }
     }
 
     private void findAffectedClasses(
