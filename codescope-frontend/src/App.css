@@ -624,3 +624,12 @@ button:disabled {
     height: 500px;
   }
 }
+
+.shortest-path-inputs {
+  display: flex;
+  gap: 10px;
+}
+
+.shortest-path-inputs select {
+  flex: 1;
+}

@@ -77,7 +77,22 @@ export async function getImpactAnalysis(className) {
 
   return response.data || [];
 }
+export async function findShortestDependencyPath(
+  startClass,
+  targetClass
+) {
+  const response = await api.get(
+    "/graph/shortest-path",
+    {
+      params: {
+        start: startClass,
+        target: targetClass,
+      },
+    }
+  );
 
+  return response.data;
+}
 export async function getCurrentHistoryClass() {
   const response = await api.get("/history/current");
   return response.data || null;

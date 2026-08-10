@@ -10,6 +10,7 @@ import RiskRanking from "./components/RiskRanking";
 import TraversalPanel from "./components/TraversalPanel";
 import ImpactAnalysis from "./components/ImpactAnalysis";
 import NavigationHistory from "./components/NavigationHistory";
+import ShortestPathPanel from "./components/ShortestPathPanel";
 
 import {
   clearHistory,
@@ -21,10 +22,10 @@ import {
   getTopRiskClasses,
   goBack,
   goForward,
-  runBFS,
   runDFS,
   scanProject,
   searchClass,
+  findShortestDependencyPath,
 } from "./api/codescopeApi";
 
 import "./App.css";
@@ -38,7 +39,8 @@ function App() {
   const [topRiskClasses, setTopRiskClasses] = useState([]);
 
   const [dfsResult, setDfsResult] = useState([]);
-  const [bfsResult, setBfsResult] = useState([]);
+  const [shortestPath, setShortestPath] = useState([]);
+
   const [impactResults, setImpactResults] = useState(null);
 
   const [currentHistoryClass, setCurrentHistoryClass] =
@@ -64,7 +66,7 @@ function App() {
 
     setSelectedClass(null);
     setDfsResult([]);
-    setBfsResult([]);
+    setShortestPath([]);
     setImpactResults(null);
     setCurrentHistoryClass(null);
   }
@@ -92,6 +94,7 @@ function App() {
       setSelectedClass(result);
 
       const current = await getCurrentHistoryClass();
+
       setCurrentHistoryClass(current);
     } catch (error) {
       setSelectedClass(null);
@@ -115,48 +118,80 @@ function App() {
   async function handleDFS(className) {
     try {
       const result = await runDFS(className);
+
       setDfsResult(result || []);
     } catch {
       setDfsResult([]);
-      toast.error("DFS traversal failed.");
+
+      toast.error(
+        "Could not trace class dependencies."
+      );
     }
   }
 
-  async function handleBFS(className) {
+  async function handleFindShortestPath(
+    startClass,
+    targetClass
+  ) {
     try {
-      const result = await runBFS(className);
-      setBfsResult(result || []);
-    } catch {
-      setBfsResult([]);
-      toast.error("BFS traversal failed.");
+      const result =
+        await findShortestDependencyPath(
+          startClass,
+          targetClass
+        );
+
+      setShortestPath(result || []);
+    } catch (error) {
+      setShortestPath([]);
+
+      if (error.response?.status === 204) {
+        toast.error(
+          "No dependency path exists between these classes."
+        );
+      } else {
+        toast.error(
+          "Could not find dependency path."
+        );
+      }
     }
   }
 
   async function handleImpactAnalysis(className) {
     try {
-      const result = await getImpactAnalysis(className);
+      const result =
+        await getImpactAnalysis(className);
+
       setImpactResults(result || []);
     } catch {
       setImpactResults(null);
-      toast.error("Impact analysis failed.");
+
+      toast.error(
+        "Impact analysis failed."
+      );
     }
   }
 
   async function handleBack() {
     try {
       const current = await goBack();
+
       setCurrentHistoryClass(current);
     } catch {
-      toast.error("Could not move backward.");
+      toast.error(
+        "Could not move backward."
+      );
     }
   }
 
   async function handleForward() {
     try {
       const current = await goForward();
+
       setCurrentHistoryClass(current);
     } catch {
-      toast.error("Could not move forward.");
+      toast.error(
+        "Could not move forward."
+      );
     }
   }
 
@@ -166,9 +201,13 @@ function App() {
 
       setCurrentHistoryClass(null);
 
-      toast.success("Navigation history cleared.");
+      toast.success(
+        "Navigation history cleared."
+      );
     } catch {
-      toast.error("Could not clear history.");
+      toast.error(
+        "Could not clear history."
+      );
     }
   }
 
@@ -193,9 +232,13 @@ function App() {
       </header>
 
       <main className="app-layout">
-        <ProjectScanner onScan={handleScan} />
+
+        <ProjectScanner
+          onScan={handleScan}
+        />
 
         <section className="two-column-layout">
+
           <ClassSearch
             onSearch={handleSearch}
             disabled={classes.length === 0}
@@ -207,6 +250,7 @@ function App() {
             onForward={handleForward}
             onClear={handleClearHistory}
           />
+
         </section>
 
         <DependencyGraph
@@ -215,16 +259,21 @@ function App() {
         />
 
         <section className="two-column-layout">
+
           <ClassList
             classes={classes}
             selectedClass={selectedClass}
             onSelectClass={handleClassSelection}
           />
 
-          <ClassDetails classInfo={selectedClass} />
+          <ClassDetails
+            classInfo={selectedClass}
+          />
+
         </section>
 
         <section className="three-column-layout">
+
           <RiskRanking
             highestRisk={highestRisk}
             topRiskClasses={topRiskClasses}
@@ -234,17 +283,27 @@ function App() {
           <TraversalPanel
             classes={classes}
             onDFS={handleDFS}
-            onBFS={handleBFS}
             dfsResult={dfsResult}
-            bfsResult={bfsResult}
           />
-
           <ImpactAnalysis
             classes={classes}
             results={impactResults}
-            onAnalyze={handleImpactAnalysis}
+            onAnalyze={
+              handleImpactAnalysis
+            }
           />
+          <ShortestPathPanel
+            classes={classes}
+            onFindShortestPath={
+              handleFindShortestPath
+            }
+            shortestPath={shortestPath}
+          />
+
+          
+
         </section>
+
       </main>
     </>
   );
