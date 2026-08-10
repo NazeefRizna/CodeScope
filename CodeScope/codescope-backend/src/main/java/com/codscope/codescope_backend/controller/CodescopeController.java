@@ -253,4 +253,37 @@ public class CodescopeController {
                 "Navigation history cleared."
         );
     }
+
+    @GetMapping("/graph/shortest-path")
+    public ResponseEntity<List<ClassInfo>> findShortestDependencyPath(
+            @RequestParam String start,
+            @RequestParam String target
+    ) {
+
+        if (codeScopeService
+                .getGraph()
+                .getNode(start) == null
+                || codeScopeService
+                .getGraph()
+                .getNode(target) == null) {
+
+            return ResponseEntity
+                    .notFound()
+                    .build();
+        }
+
+        List<ClassInfo> path =
+                codeScopeService.findShortestDependencyPath(
+                        start,
+                        target
+                );
+
+        if (path.isEmpty()) {
+            return ResponseEntity
+                    .noContent()
+                    .build();
+        }
+
+        return ResponseEntity.ok(path);
+    }
 }

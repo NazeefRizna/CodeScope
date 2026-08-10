@@ -294,6 +294,25 @@ public class CodeScopeService {
         return graph.breadthFirstSearch(className);
     }
 
+    public List<ClassInfo> findShortestDependencyPath(
+            String startClassName,
+            String targetClassName
+    ) {
+
+        if (startClassName == null
+                || startClassName.isBlank()
+                || targetClassName == null
+                || targetClassName.isBlank()) {
+
+            return new ArrayList<>();
+        }
+
+        return graph.findShortestDependencyPath(
+                startClassName,
+                targetClassName
+        );
+    }
+
     public List<ImpactResult> getImpactAnalysis(
             String className
     ) {

@@ -246,6 +246,81 @@ public class Graph {
         return traversalResult;
     }
 
+    public List<ClassInfo> findShortestDependencyPath(
+            String startClassName,
+            String targetClassName
+    ) {
+
+        GraphNode startNode = getNode(startClassName);
+        GraphNode targetNode = getNode(targetClassName);
+
+        List<ClassInfo> shortestPath = new ArrayList<>();
+
+        if (startNode == null || targetNode == null) {
+            return shortestPath;
+        }
+
+        ArrayList<GraphNode> visited = new ArrayList<>();
+        ArrayList<GraphNode> queue = new ArrayList<>();
+
+        ArrayList<GraphNode> previousNodes = new ArrayList<>();
+        ArrayList<GraphNode> previousValues = new ArrayList<>();
+
+        visited.add(startNode);
+        queue.add(startNode);
+
+        int front = 0;
+
+        while (front < queue.size()) {
+
+            GraphNode current = queue.get(front);
+            front++;
+
+            if (current == targetNode) {
+                break;
+            }
+
+            for (GraphNode neighbour : current.getDependencies()) {
+
+                if (!visited.contains(neighbour)) {
+
+                    visited.add(neighbour);
+                    queue.add(neighbour);
+
+                    previousNodes.add(neighbour);
+                    previousValues.add(current);
+                }
+            }
+        }
+
+        if (!visited.contains(targetNode)) {
+            return shortestPath;
+        }
+
+        GraphNode current = targetNode;
+
+        while (current != null) {
+
+            shortestPath.add(
+                    0,
+                    current.getClassInfo()
+            );
+
+            if (current == startNode) {
+                break;
+            }
+
+            int index = previousNodes.indexOf(current);
+
+            if (index == -1) {
+                return new ArrayList<>();
+            }
+
+            current = previousValues.get(index);
+        }
+
+        return shortestPath;
+    }
 
     // Impact analysis returning data
     public List<ImpactResult> impactAnalysis(
