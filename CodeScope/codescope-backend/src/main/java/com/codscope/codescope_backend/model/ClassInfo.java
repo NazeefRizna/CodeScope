@@ -67,11 +67,6 @@ public class ClassInfo {
         this.componentRiskIndex = componentRiskIndex;
     }
 
-    @Override
-    public String toString() {
-        return className;
-    }
-
     public String getFullClassName() {
         return packageName + "." + className;
     }

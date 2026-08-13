@@ -1,35 +1,105 @@
 package com.codscope.codescope_backend.analysis;
 
+import com.codscope.codescope_backend.graph.Graph;
 import com.codscope.codescope_backend.model.ClassInfo;
 
-public class RiskCalculator {
+import java.util.List;
 
-    private static final double INCOMING_WEIGHT = 3.0;
-    private static final double OUTGOING_WEIGHT = 2.0;
+public class RiskCalculator {
 
     private RiskCalculator() {
     }
 
-    public static double calculateRisk(ClassInfo classInfo) {
+    public static void calculateRiskScores(
+            List<ClassInfo> classes,
+            Graph graph
+    ) {
 
-        if (classInfo == null) {
+        if (classes == null
+                || classes.isEmpty()
+                || graph == null) {
 
-            throw new IllegalArgumentException("Class information cannot be null.");
+            return;
         }
 
-        int incomingDependencies = classInfo.getIncomingDependencies();
+        int totalClasses = classes.size();
 
-        int outgoingDependencies = classInfo.getOutgoingDependencies();
+        int maxIncoming = 0;
+        int maxOutgoing = 0;
+        int maxCbo = 0;
 
-        if (incomingDependencies < 0 || outgoingDependencies < 0) {
+        // Find maximum values for normalization
+        for (ClassInfo classInfo : classes) {
 
-            throw new IllegalArgumentException("Dependency counts cannot be negative.");
+            int incoming =
+                    classInfo.getIncomingDependencies();
+
+            int outgoing =
+                    classInfo.getOutgoingDependencies();
+
+            int cbo =
+                    incoming + outgoing;
+
+            maxIncoming =
+                    Math.max(maxIncoming, incoming);
+
+            maxOutgoing =
+                    Math.max(maxOutgoing, outgoing);
+
+            maxCbo =
+                    Math.max(maxCbo, cbo);
         }
 
-        double riskScore = (incomingDependencies * INCOMING_WEIGHT) + (outgoingDependencies * OUTGOING_WEIGHT);
+        // Calculate CRI for each class
+        for (ClassInfo classInfo : classes) {
 
-        classInfo.setComponentRiskIndex(riskScore);
+            int incoming =
+                    classInfo.getIncomingDependencies();
 
-        return riskScore;
+            int outgoing =
+                    classInfo.getOutgoingDependencies();
+
+            int cbo =
+                    incoming + outgoing;
+
+            int affectedCount =
+                    graph.getAffectedClassCount(
+                            classInfo.getClassName()
+                    );
+
+            double normalizedIncoming =
+                    maxIncoming == 0
+                            ? 0
+                            : (double) incoming / maxIncoming;
+
+            double normalizedOutgoing =
+                    maxOutgoing == 0
+                            ? 0
+                            : (double) outgoing / maxOutgoing;
+
+            double normalizedCbo =
+                    maxCbo == 0
+                            ? 0
+                            : (double) cbo / maxCbo;
+
+            double normalizedReach =
+                    totalClasses <= 1
+                            ? 0
+                            : (double) affectedCount
+                            / (totalClasses - 1);
+
+            double cri =
+                    100 * (
+                            (0.45 * normalizedIncoming)
+                                    + (0.30 * normalizedReach)
+                                    + (0.15 * normalizedOutgoing)
+                                    + (0.10 * normalizedCbo)
+                    );
+
+            cri =
+                    Math.round(cri * 100.0) / 100.0;
+
+            classInfo.setComponentRiskIndex(cri);
+        }
     }
 }

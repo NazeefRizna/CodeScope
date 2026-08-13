@@ -29,7 +29,7 @@ public class Graph {
     }
 
     // Add a class as a graph node
-    public void addClass(ClassInfo classInfo) {
+    private void addClass(ClassInfo classInfo) {
 
         if (classInfo == null) {
             return;
@@ -47,15 +47,22 @@ public class Graph {
             String destinationClassName
     ) {
 
-        GraphNode sourceNode = getNode(sourceClassName);
-        GraphNode destinationNode = getNode(destinationClassName);
+        GraphNode sourceNode =
+                getNode(sourceClassName);
 
-        if (sourceNode == null || destinationNode == null) {
+        GraphNode destinationNode =
+                getNode(destinationClassName);
+
+        if (sourceNode == null
+                || destinationNode == null) {
+
             return false;
         }
 
         boolean added =
-                sourceNode.addDependency(destinationNode);
+                sourceNode.addDependency(
+                        destinationNode
+                );
 
         if (added) {
 
@@ -74,16 +81,21 @@ public class Graph {
     // Find a graph node by simple or full class name
     public GraphNode getNode(String className) {
 
-        if (className == null || className.isBlank()) {
+        if (className == null
+                || className.isBlank()) {
+
             return null;
         }
 
         for (GraphNode node : nodes) {
 
-            ClassInfo info = node.getClassInfo();
+            ClassInfo info =
+                    node.getClassInfo();
 
-            if (info.getClassName().equals(className)
-                    || info.getFullClassName().equals(className)) {
+            if (info.getClassName()
+                    .equals(className)
+                    || info.getFullClassName()
+                    .equals(className)) {
 
                 return node;
             }
@@ -92,38 +104,30 @@ public class Graph {
         return null;
     }
 
-    public boolean containsClass(String className) {
+    private boolean containsClass(
+            String className
+    ) {
+
         return getNode(className) != null;
     }
 
-    public ArrayList<GraphNode> getAllNodes() {
-        return new ArrayList<>(nodes);
-    }
-
-    public boolean isEmpty() {
-        return nodes.isEmpty();
-    }
-
-    public int size() {
-        return nodes.size();
-    }
-
-    public void clear() {
-        nodes.clear();
-    }
-
-
-    // Return graph nodes and edges
+    // Return graph data for frontend visualization
     public GraphData getGraphData() {
 
-        List<ClassInfo> nodeData = new ArrayList<>();
-        List<GraphEdge> edgeData = new ArrayList<>();
+        List<ClassInfo> nodeData =
+                new ArrayList<>();
+
+        List<GraphEdge> edgeData =
+                new ArrayList<>();
 
         for (GraphNode node : nodes) {
 
-            nodeData.add(node.getClassInfo());
+            nodeData.add(
+                    node.getClassInfo()
+            );
 
-            for (GraphNode dependency : node.getDependencies()) {
+            for (GraphNode dependency :
+                    node.getDependencies()) {
 
                 edgeData.add(
                         new GraphEdge(
@@ -137,34 +141,29 @@ public class Graph {
             }
         }
 
-        return new GraphData(nodeData, edgeData);
+        return new GraphData(
+                nodeData,
+                edgeData
+        );
     }
 
-    // Return dependency counts
-    public List<ClassInfo> getDependencyCounts() {
-
-        List<ClassInfo> results = new ArrayList<>();
-
-        for (GraphNode node : nodes) {
-            results.add(node.getClassInfo());
-        }
-
-        return results;
-    }
-
-    // DFS returning data
+    // DFS - Trace all dependencies
     public List<ClassInfo> depthFirstSearch(
             String startClassName
     ) {
 
-        GraphNode startNode = getNode(startClassName);
+        GraphNode startNode =
+                getNode(startClassName);
 
         if (startNode == null) {
             return new ArrayList<>();
         }
 
-        ArrayList<GraphNode> visited = new ArrayList<>();
-        List<ClassInfo> traversalResult = new ArrayList<>();
+        ArrayList<GraphNode> visited =
+                new ArrayList<>();
+
+        List<ClassInfo> traversalResult =
+                new ArrayList<>();
 
         dfsRecursive(
                 startNode,
@@ -182,7 +181,10 @@ public class Graph {
     ) {
 
         visited.add(current);
-        traversalResult.add(current.getClassInfo());
+
+        traversalResult.add(
+                current.getClassInfo()
+        );
 
         for (GraphNode neighbour :
                 current.getDependencies()) {
@@ -198,15 +200,25 @@ public class Graph {
         }
     }
 
-    // BFS returning data
-    public List<ClassInfo> breadthFirstSearch(
-            String startClassName
+    //Find shortest dependency path
+    public List<ClassInfo> findShortestDependencyPath(
+            String startClassName,
+            String targetClassName
     ) {
 
-        GraphNode startNode = getNode(startClassName);
+        GraphNode startNode =
+                getNode(startClassName);
 
-        if (startNode == null) {
-            return new ArrayList<>();
+        GraphNode targetNode =
+                getNode(targetClassName);
+
+        List<ClassInfo> shortestPath =
+                new ArrayList<>();
+
+        if (startNode == null
+                || targetNode == null) {
+
+            return shortestPath;
         }
 
         ArrayList<GraphNode> visited =
@@ -215,7 +227,10 @@ public class Graph {
         ArrayList<GraphNode> queue =
                 new ArrayList<>();
 
-        List<ClassInfo> traversalResult =
+        ArrayList<GraphNode> previousNodes =
+                new ArrayList<>();
+
+        ArrayList<GraphNode> previousValues =
                 new ArrayList<>();
 
         visited.add(startNode);
@@ -225,62 +240,17 @@ public class Graph {
 
         while (front < queue.size()) {
 
-            GraphNode current = queue.get(front);
-            front++;
+            GraphNode current =
+                    queue.get(front);
 
-            traversalResult.add(
-                    current.getClassInfo()
-            );
-
-            for (GraphNode neighbour :
-                    current.getDependencies()) {
-
-                if (!visited.contains(neighbour)) {
-
-                    visited.add(neighbour);
-                    queue.add(neighbour);
-                }
-            }
-        }
-
-        return traversalResult;
-    }
-
-    public List<ClassInfo> findShortestDependencyPath(
-            String startClassName,
-            String targetClassName
-    ) {
-
-        GraphNode startNode = getNode(startClassName);
-        GraphNode targetNode = getNode(targetClassName);
-
-        List<ClassInfo> shortestPath = new ArrayList<>();
-
-        if (startNode == null || targetNode == null) {
-            return shortestPath;
-        }
-
-        ArrayList<GraphNode> visited = new ArrayList<>();
-        ArrayList<GraphNode> queue = new ArrayList<>();
-
-        ArrayList<GraphNode> previousNodes = new ArrayList<>();
-        ArrayList<GraphNode> previousValues = new ArrayList<>();
-
-        visited.add(startNode);
-        queue.add(startNode);
-
-        int front = 0;
-
-        while (front < queue.size()) {
-
-            GraphNode current = queue.get(front);
             front++;
 
             if (current == targetNode) {
                 break;
             }
 
-            for (GraphNode neighbour : current.getDependencies()) {
+            for (GraphNode neighbour :
+                    current.getDependencies()) {
 
                 if (!visited.contains(neighbour)) {
 
@@ -310,19 +280,21 @@ public class Graph {
                 break;
             }
 
-            int index = previousNodes.indexOf(current);
+            int index =
+                    previousNodes.indexOf(current);
 
             if (index == -1) {
                 return new ArrayList<>();
             }
 
-            current = previousValues.get(index);
+            current =
+                    previousValues.get(index);
         }
 
         return shortestPath;
     }
 
-    // Impact analysis returning data
+    // Impact Analysis
     public List<ImpactResult> impactAnalysis(
             String changedClassName
     ) {
@@ -352,52 +324,6 @@ public class Graph {
         return results;
     }
 
-    public int getAffectedClassCount(String className) {
-
-        GraphNode changedNode = getNode(className);
-
-        if (changedNode == null) {
-            return 0;
-        }
-
-        ArrayList<GraphNode> visited = new ArrayList<>();
-
-        visited.add(changedNode);
-
-        countAffectedClasses(
-                changedNode,
-                visited
-        );
-
-        // Subtract the original changed class
-        return visited.size() - 1;
-    }
-
-    private void countAffectedClasses(
-            GraphNode changedNode,
-            ArrayList<GraphNode> visited
-    ) {
-
-        for (GraphNode possibleAffectedNode : nodes) {
-
-            boolean dependsOnChangedNode =
-                    possibleAffectedNode
-                            .getDependencies()
-                            .contains(changedNode);
-
-            if (dependsOnChangedNode
-                    && !visited.contains(possibleAffectedNode)) {
-
-                visited.add(possibleAffectedNode);
-
-                countAffectedClasses(
-                        possibleAffectedNode,
-                        visited
-                );
-            }
-        }
-    }
-
     private void findAffectedClasses(
             GraphNode changedNode,
             ArrayList<GraphNode> visited,
@@ -405,19 +331,24 @@ public class Graph {
             int impactLevel
     ) {
 
-        for (GraphNode possibleAffectedNode : nodes) {
+        for (GraphNode possibleAffectedNode :
+                nodes) {
 
             boolean dependsOnChangedNode =
                     possibleAffectedNode
                             .getDependencies()
-                            .contains(changedNode);
+                            .contains(
+                                    changedNode
+                            );
 
             if (dependsOnChangedNode
                     && !visited.contains(
                     possibleAffectedNode
             )) {
 
-                visited.add(possibleAffectedNode);
+                visited.add(
+                        possibleAffectedNode
+                );
 
                 String impactType =
                         impactLevel == 1
@@ -447,85 +378,60 @@ public class Graph {
         }
     }
 
-    // --------------------------------------------------
-    // Console display methods can remain for testing
-    // --------------------------------------------------
+    //CRI calculation
+    public int getAffectedClassCount(
+            String className
+    ) {
 
-    public void displayGraph() {
+        GraphNode changedNode =
+                getNode(className);
 
-        System.out.println(
-                "\n----- DEPENDENCY GRAPH -----\n"
+        if (changedNode == null) {
+            return 0;
+        }
+
+        ArrayList<GraphNode> visited =
+                new ArrayList<>();
+
+        visited.add(changedNode);
+
+        countAffectedClasses(
+                changedNode,
+                visited
         );
 
-        for (GraphNode node : nodes) {
-
-            System.out.print(
-                    node.getClassInfo()
-                            .getClassName()
-                            + " → "
-            );
-
-            if (node.getDependencies().isEmpty()) {
-
-                System.out.println(
-                        "No dependencies"
-                );
-
-                continue;
-            }
-
-            for (int i = 0;
-                 i < node.getDependencies().size();
-                 i++) {
-
-                GraphNode dependency =
-                        node.getDependencies().get(i);
-
-                System.out.print(
-                        dependency.getClassInfo()
-                                .getClassName()
-                );
-
-                if (i <
-                        node.getDependencies().size() - 1) {
-
-                    System.out.print(", ");
-                }
-            }
-
-            System.out.println();
-        }
+        return visited.size() - 1;
     }
 
-    public void displayDependencyCounts() {
+    private void countAffectedClasses(
+            GraphNode changedNode,
+            ArrayList<GraphNode> visited
+    ) {
 
-        System.out.println(
-                "\n----- DEPENDENCY COUNTS -----\n"
-        );
+        for (GraphNode possibleAffectedNode :
+                nodes) {
 
-        for (GraphNode node : nodes) {
+            boolean dependsOnChangedNode =
+                    possibleAffectedNode
+                            .getDependencies()
+                            .contains(
+                                    changedNode
+                            );
 
-            ClassInfo info =
-                    node.getClassInfo();
+            if (dependsOnChangedNode
+                    && !visited.contains(
+                    possibleAffectedNode
+            )) {
 
-            System.out.println(
-                    "Class      : "
-                            + info.getClassName()
-            );
+                visited.add(
+                        possibleAffectedNode
+                );
 
-            System.out.println(
-                    "Incoming   : "
-                            + info.getIncomingDependencies()
-            );
-
-            System.out.println(
-                    "Outgoing   : "
-                            + info.getOutgoingDependencies()
-            );
-
-            System.out.println(
-                    "-----------------------------------"
-            );
+                countAffectedClasses(
+                        possibleAffectedNode,
+                        visited
+                );
+            }
         }
     }
 }

@@ -1,10 +1,11 @@
 package com.codscope.codescope_backend.controller;
 
-import com.codscope.codescope_backend.model.GraphData;
-import com.codscope.codescope_backend.model.ImpactResult;
 import com.codscope.codescope_backend.heap.HeapNode;
 import com.codscope.codescope_backend.model.ClassInfo;
+import com.codscope.codescope_backend.model.GraphData;
+import com.codscope.codescope_backend.model.ImpactResult;
 import com.codscope.codescope_backend.service.CodeScopeService;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,11 +18,15 @@ public class CodescopeController {
 
     private final CodeScopeService codeScopeService;
 
-    public CodescopeController(CodeScopeService codeScopeService) {
-        this.codeScopeService = codeScopeService;
+    public CodescopeController(
+            CodeScopeService codeScopeService
+    ) {
+
+        this.codeScopeService =
+                codeScopeService;
     }
 
-    // Scan a Java project
+    // Project Scanner
     @PostMapping("/scan")
     public ResponseEntity<String> scanProject(
             @RequestParam String projectPath
@@ -29,13 +34,17 @@ public class CodescopeController {
 
         try {
 
-            codeScopeService.scanProject(projectPath);
+            codeScopeService.scanProject(
+                    projectPath
+            );
 
             if (!codeScopeService.hasLoadedProject()) {
 
                 return ResponseEntity
                         .badRequest()
-                        .body("No Java classes were found.");
+                        .body(
+                                "No Java classes were found."
+                        );
             }
 
             return ResponseEntity.ok(
@@ -60,9 +69,10 @@ public class CodescopeController {
         }
     }
 
-    // Return scanned class
+    // Classes
     @GetMapping("/classes")
-    public ResponseEntity<List<ClassInfo>> getAllClasses() {
+    public ResponseEntity<List<ClassInfo>>
+    getAllClasses() {
 
         if (!codeScopeService.hasLoadedProject()) {
 
@@ -76,75 +86,16 @@ public class CodescopeController {
         );
     }
 
-    @GetMapping("/graph")
-    public ResponseEntity<GraphData> getGraphData() {
-
-        if (!codeScopeService.hasLoadedProject()) {
-            return ResponseEntity.noContent().build();
-        }
-
-        return ResponseEntity.ok(
-                codeScopeService.getGraphData()
-        );
-    }
-    @GetMapping("/graph/dfs/{className}")
-    public ResponseEntity<List<ClassInfo>> runDFS(
-            @PathVariable String className
-    ) {
-
-        List<ClassInfo> result =
-                codeScopeService.getDFSResult(className);
-
-        if (result.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        return ResponseEntity.ok(result);
-    }
-
-    @GetMapping("/graph/bfs/{className}")
-    public ResponseEntity<List<ClassInfo>> runBFS(
-            @PathVariable String className
-    ) {
-
-        List<ClassInfo> result =
-                codeScopeService.getBFSResult(className);
-
-        if (result.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        return ResponseEntity.ok(result);
-    }
-
-    @GetMapping("/impact/{className}")
-    public ResponseEntity<List<ImpactResult>>
-    getImpactAnalysis(
-            @PathVariable String className
-    ) {
-
-        if (codeScopeService
-                .getGraph()
-                .getNode(className) == null) {
-
-            return ResponseEntity
-                    .notFound()
-                    .build();
-        }
-
-        return ResponseEntity.ok(
-                codeScopeService
-                        .getImpactAnalysis(className)
-        );
-    }
-    // Search for a class using the AVL Tree
+    // AVL Tree search
     @GetMapping("/classes/search/{className}")
     public ResponseEntity<ClassInfo> searchClass(
             @PathVariable String className
     ) {
 
         ClassInfo result =
-                codeScopeService.searchClass(className);
+                codeScopeService.searchClass(
+                        className
+                );
 
         if (result == null) {
 
@@ -156,12 +107,108 @@ public class CodescopeController {
         return ResponseEntity.ok(result);
     }
 
-    // Highest-risk class from Max Heap
+    // Dependency Graph
+    @GetMapping("/graph")
+    public ResponseEntity<GraphData>
+    getGraphData() {
+
+        if (!codeScopeService.hasLoadedProject()) {
+
+            return ResponseEntity
+                    .noContent()
+                    .build();
+        }
+
+        return ResponseEntity.ok(
+                codeScopeService.getGraphData()
+        );
+    }
+
+    // DFS - Trace dependencies
+    @GetMapping("/graph/dfs/{className}")
+    public ResponseEntity<List<ClassInfo>>
+    traceDependencies(
+            @PathVariable String className
+    ) {
+
+        if (!codeScopeService
+                .graphContainsClass(className)) {
+
+            return ResponseEntity
+                    .notFound()
+                    .build();
+        }
+
+        return ResponseEntity.ok(
+                codeScopeService
+                        .getDFSResult(className)
+        );
+    }
+
+    // BFS - Shortest dependency path
+    @GetMapping("/graph/shortest-path")
+    public ResponseEntity<List<ClassInfo>>
+    findShortestDependencyPath(
+            @RequestParam String start,
+            @RequestParam String target
+    ) {
+
+        if (!codeScopeService
+                .graphContainsClass(start)
+                || !codeScopeService
+                .graphContainsClass(target)) {
+
+            return ResponseEntity
+                    .notFound()
+                    .build();
+        }
+
+        List<ClassInfo> path =
+                codeScopeService
+                        .findShortestDependencyPath(
+                                start,
+                                target
+                        );
+
+        if (path.isEmpty()) {
+
+            return ResponseEntity
+                    .noContent()
+                    .build();
+        }
+
+        return ResponseEntity.ok(path);
+    }
+
+    // Impact Analysis
+    @GetMapping("/impact/{className}")
+    public ResponseEntity<List<ImpactResult>>
+    getImpactAnalysis(
+            @PathVariable String className
+    ) {
+
+        if (!codeScopeService
+                .graphContainsClass(className)) {
+
+            return ResponseEntity
+                    .notFound()
+                    .build();
+        }
+
+        return ResponseEntity.ok(
+                codeScopeService
+                        .getImpactAnalysis(className)
+        );
+    }
+
+    // Component Risk
     @GetMapping("/risk/highest")
-    public ResponseEntity<HeapNode> getHighestRiskClass() {
+    public ResponseEntity<HeapNode>
+    getHighestRiskClass() {
 
         HeapNode highestRisk =
-                codeScopeService.getHighestRiskClass();
+                codeScopeService
+                        .getHighestRiskClass();
 
         if (highestRisk == null) {
 
@@ -170,13 +217,16 @@ public class CodescopeController {
                     .build();
         }
 
-        return ResponseEntity.ok(highestRisk);
+        return ResponseEntity.ok(
+                highestRisk
+        );
     }
 
-    // Top risk classes from Max Heap
     @GetMapping("/risk/top")
-    public ResponseEntity<List<HeapNode>> getTopRiskClasses(
-            @RequestParam(defaultValue = "5") int count
+    public ResponseEntity<List<HeapNode>>
+    getTopRiskClasses(
+            @RequestParam(defaultValue = "5")
+            int count
     ) {
 
         if (count <= 0) {
@@ -186,15 +236,16 @@ public class CodescopeController {
                     .build();
         }
 
-        List<HeapNode> result =
-                codeScopeService.getTopRiskClasses(count);
-
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(
+                codeScopeService
+                        .getTopRiskClasses(count)
+        );
     }
 
-    // Return current navigation class
+    // Navigation History
     @GetMapping("/history/current")
-    public ResponseEntity<String> getCurrentClass() {
+    public ResponseEntity<String>
+    getCurrentClass() {
 
         String current =
                 codeScopeService.getCurrentClass();
@@ -209,7 +260,6 @@ public class CodescopeController {
         return ResponseEntity.ok(current);
     }
 
-    // Navigate backward
     @PostMapping("/history/back")
     public ResponseEntity<String> goBack() {
 
@@ -226,7 +276,6 @@ public class CodescopeController {
         return ResponseEntity.ok(current);
     }
 
-    // Navigate forward
     @PostMapping("/history/forward")
     public ResponseEntity<String> goForward() {
 
@@ -243,47 +292,15 @@ public class CodescopeController {
         return ResponseEntity.ok(current);
     }
 
-    // Clear navigation history
     @DeleteMapping("/history")
-    public ResponseEntity<String> clearHistory() {
+    public ResponseEntity<String>
+    clearHistory() {
 
-        codeScopeService.clearNavigationHistory();
+        codeScopeService
+                .clearNavigationHistory();
 
         return ResponseEntity.ok(
                 "Navigation history cleared."
         );
-    }
-
-    @GetMapping("/graph/shortest-path")
-    public ResponseEntity<List<ClassInfo>> findShortestDependencyPath(
-            @RequestParam String start,
-            @RequestParam String target
-    ) {
-
-        if (codeScopeService
-                .getGraph()
-                .getNode(start) == null
-                || codeScopeService
-                .getGraph()
-                .getNode(target) == null) {
-
-            return ResponseEntity
-                    .notFound()
-                    .build();
-        }
-
-        List<ClassInfo> path =
-                codeScopeService.findShortestDependencyPath(
-                        start,
-                        target
-                );
-
-        if (path.isEmpty()) {
-            return ResponseEntity
-                    .noContent()
-                    .build();
-        }
-
-        return ResponseEntity.ok(path);
     }
 }

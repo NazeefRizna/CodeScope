@@ -11,8 +11,6 @@ public class AVLNode {
 
     public AVLNode(ClassInfo classInfo) {
         this.classInfo = classInfo;
-        this.left = null;
-        this.right = null;
         this.height = 1;
     }
 
@@ -42,10 +40,5 @@ public class AVLNode {
 
     public void setHeight(int height) {
         this.height = height;
-    }
-
-    @Override
-    public String toString() {
-        return classInfo.getClassName();
     }
 }

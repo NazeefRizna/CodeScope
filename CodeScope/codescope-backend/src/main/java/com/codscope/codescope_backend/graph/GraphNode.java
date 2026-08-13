@@ -1,5 +1,4 @@
-
-package com.codscope.codescope_backend.graph ;
+package com.codscope.codescope_backend.graph;
 
 import com.codscope.codescope_backend.model.ClassInfo;
 
@@ -11,6 +10,7 @@ public class GraphNode {
     private final ArrayList<GraphNode> dependencies;
 
     public GraphNode(ClassInfo classInfo) {
+
         this.classInfo = classInfo;
         this.dependencies = new ArrayList<>();
     }
@@ -23,22 +23,23 @@ public class GraphNode {
         return dependencies;
     }
 
-    public boolean addDependency(GraphNode dependencyNode) {
+    public boolean addDependency(
+            GraphNode dependencyNode
+    ) {
 
-        if (dependencyNode == null || dependencyNode == this) {
+        if (dependencyNode == null
+                || dependencyNode == this
+                || dependencies.contains(
+                dependencyNode
+        )) {
+
             return false;
         }
 
-        if (dependencies.contains(dependencyNode)) {
-            return false;
-        }
+        dependencies.add(
+                dependencyNode
+        );
 
-        dependencies.add(dependencyNode);
         return true;
-    }
-
-    @Override
-    public String toString() {
-        return classInfo.getClassName();
     }
 }

@@ -19,20 +19,42 @@ public class AVLTree {
         root = insertNode(root, classInfo);
     }
 
-    private AVLNode insertNode(AVLNode node, ClassInfo classInfo) {
+    private AVLNode insertNode(
+            AVLNode node,
+            ClassInfo classInfo
+    ) {
 
         if (node == null) {
             return new AVLNode(classInfo);
         }
 
-        int comparison = classInfo.getClassName()
-                .compareTo(node.getClassInfo().getClassName());
+        int comparison =
+                classInfo.getClassName()
+                        .compareTo(
+                                node.getClassInfo()
+                                        .getClassName()
+                        );
 
         if (comparison < 0) {
-            node.setLeft(insertNode(node.getLeft(), classInfo));
+
+            node.setLeft(
+                    insertNode(
+                            node.getLeft(),
+                            classInfo
+                    )
+            );
+
         } else if (comparison > 0) {
-            node.setRight(insertNode(node.getRight(), classInfo));
+
+            node.setRight(
+                    insertNode(
+                            node.getRight(),
+                            classInfo
+                    )
+            );
+
         } else {
+
             return node;
         }
 
@@ -47,97 +69,51 @@ public class AVLTree {
             return null;
         }
 
-        AVLNode result = searchNode(root, className);
+        AVLNode result =
+                searchNode(root, className);
 
-        return result == null ? null : result.getClassInfo();
+        return result == null
+                ? null
+                : result.getClassInfo();
     }
 
-    private AVLNode searchNode(AVLNode node, String className) {
-
-        if (node == null || className == null) {
-            return null;
-        }
-
-        int comparison = className.compareTo(
-                node.getClassInfo().getClassName()
-        );
-
-        if (comparison == 0) {
-            return node;
-        } else if (comparison < 0) {
-            return searchNode(node.getLeft(), className);
-        } else {
-            return searchNode(node.getRight(), className);
-        }
-    }
-
-    public boolean contains(String className) {
-        return search(className) != null;
-    }
-
-    public void delete(String className) {
-
-        if (className == null || className.isBlank()) {
-            return;
-        }
-
-        root = deleteNode(root, className);
-    }
-
-    private AVLNode deleteNode(AVLNode node, String className) {
+    private AVLNode searchNode(
+            AVLNode node,
+            String className
+    ) {
 
         if (node == null) {
             return null;
         }
 
-        int comparison = className.compareTo(
-                node.getClassInfo().getClassName()
-        );
+        int comparison =
+                className.compareTo(
+                        node.getClassInfo()
+                                .getClassName()
+                );
 
-        if (comparison < 0) {
-            node.setLeft(deleteNode(node.getLeft(), className));
-        } else if (comparison > 0) {
-            node.setRight(deleteNode(node.getRight(), className));
-        } else {
+        if (comparison == 0) {
 
-            if (node.getLeft() == null) {
-                return node.getRight();
-            } else if (node.getRight() == null) {
-                return node.getLeft();
-            }
+            return node;
 
-            AVLNode successor = getMinNode(node.getRight());
+        } else if (comparison < 0) {
 
-            AVLNode replacement =
-                    new AVLNode(successor.getClassInfo());
-
-            replacement.setLeft(node.getLeft());
-
-            replacement.setRight(
-                    deleteNode(
-                            node.getRight(),
-                            successor.getClassInfo().getClassName()
-                    )
+            return searchNode(
+                    node.getLeft(),
+                    className
             );
 
-            node = replacement;
+        } else {
+
+            return searchNode(
+                    node.getRight(),
+                    className
+            );
         }
-
-        updateHeight(node);
-
-        return balance(node);
-    }
-
-    private AVLNode getMinNode(AVLNode node) {
-
-        while (node.getLeft() != null) {
-            node = node.getLeft();
-        }
-
-        return node;
     }
 
     private void updateHeight(AVLNode node) {
+
         node.setHeight(
                 1 + Math.max(
                         getHeight(node.getLeft()),
@@ -147,36 +123,57 @@ public class AVLTree {
     }
 
     private int getHeight(AVLNode node) {
-        return node == null ? 0 : node.getHeight();
-    }
 
-    private int getBalanceFactor(AVLNode node) {
         return node == null
                 ? 0
-                : getHeight(node.getLeft())
+                : node.getHeight();
+    }
+
+    private int getBalanceFactor(
+            AVLNode node
+    ) {
+
+        if (node == null) {
+            return 0;
+        }
+
+        return getHeight(node.getLeft())
                 - getHeight(node.getRight());
     }
 
     private AVLNode balance(AVLNode node) {
 
-        int balanceFactor = getBalanceFactor(node);
+        int balanceFactor =
+                getBalanceFactor(node);
 
+        // Left heavy
         if (balanceFactor > 1) {
 
-            if (getBalanceFactor(node.getLeft()) < 0) {
+            // Left-Right case
+            if (getBalanceFactor(
+                    node.getLeft()) < 0) {
+
                 node.setLeft(
-                        rotateLeft(node.getLeft())
+                        rotateLeft(
+                                node.getLeft()
+                        )
                 );
             }
 
             return rotateRight(node);
         }
 
+        // Right heavy
         if (balanceFactor < -1) {
 
-            if (getBalanceFactor(node.getRight()) > 0) {
+            // Right-Left case
+            if (getBalanceFactor(
+                    node.getRight()) > 0) {
+
                 node.setRight(
-                        rotateRight(node.getRight())
+                        rotateRight(
+                                node.getRight()
+                        )
                 );
             }
 
@@ -186,10 +183,15 @@ public class AVLTree {
         return node;
     }
 
-    private AVLNode rotateRight(AVLNode node) {
+    private AVLNode rotateRight(
+            AVLNode node
+    ) {
 
-        AVLNode newRoot = node.getLeft();
-        AVLNode transferSubtree = newRoot.getRight();
+        AVLNode newRoot =
+                node.getLeft();
+
+        AVLNode transferSubtree =
+                newRoot.getRight();
 
         newRoot.setRight(node);
         node.setLeft(transferSubtree);
@@ -200,10 +202,15 @@ public class AVLTree {
         return newRoot;
     }
 
-    private AVLNode rotateLeft(AVLNode node) {
+    private AVLNode rotateLeft(
+            AVLNode node
+    ) {
 
-        AVLNode newRoot = node.getRight();
-        AVLNode transferSubtree = newRoot.getLeft();
+        AVLNode newRoot =
+                node.getRight();
+
+        AVLNode transferSubtree =
+                newRoot.getLeft();
 
         newRoot.setLeft(node);
         node.setRight(transferSubtree);
@@ -212,40 +219,5 @@ public class AVLTree {
         updateHeight(newRoot);
 
         return newRoot;
-    }
-
-    public void displayInOrder() {
-
-        System.out.println(
-                "\n----- AVL TREE (SORTED BY CLASS NAME) -----\n"
-        );
-
-        inOrder(root);
-    }
-
-    private void inOrder(AVLNode node) {
-
-        if (node == null) {
-            return;
-        }
-
-        inOrder(node.getLeft());
-
-        System.out.println(
-                node.getClassInfo().getClassName()
-                        + "  ("
-                        + node.getClassInfo().getPackageName()
-                        + ")"
-        );
-
-        inOrder(node.getRight());
-    }
-
-    public boolean isEmpty() {
-        return root == null;
-    }
-
-    public int height() {
-        return getHeight(root);
     }
 }

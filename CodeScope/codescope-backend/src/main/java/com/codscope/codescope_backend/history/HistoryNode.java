@@ -2,14 +2,14 @@ package com.codscope.codescope_backend.history;
 
 public class HistoryNode {
 
-    private String className;
+    private final String className;
+
     private HistoryNode previous;
     private HistoryNode next;
 
     public HistoryNode(String className) {
+
         this.className = className;
-        this.previous = null;
-        this.next = null;
     }
 
     public String getClassName() {
@@ -20,7 +20,10 @@ public class HistoryNode {
         return previous;
     }
 
-    public void setPrevious(HistoryNode previous) {
+    public void setPrevious(
+            HistoryNode previous
+    ) {
+
         this.previous = previous;
     }
 
@@ -28,7 +31,10 @@ public class HistoryNode {
         return next;
     }
 
-    public void setNext(HistoryNode next) {
+    public void setNext(
+            HistoryNode next
+    ) {
+
         this.next = next;
     }
 }

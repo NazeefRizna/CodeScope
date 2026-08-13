@@ -1,14 +1,16 @@
 package com.codscope.codescope_backend.service;
 
-import com.codscope.codescope_backend.model.GraphData;
-import com.codscope.codescope_backend.model.ImpactResult;
+import com.codscope.codescope_backend.analysis.RiskCalculator;
 import com.codscope.codescope_backend.avl.AVLTree;
 import com.codscope.codescope_backend.graph.Graph;
 import com.codscope.codescope_backend.heap.HeapNode;
 import com.codscope.codescope_backend.heap.MaxHeap;
 import com.codscope.codescope_backend.history.NavigationHistory;
 import com.codscope.codescope_backend.model.ClassInfo;
+import com.codscope.codescope_backend.model.GraphData;
+import com.codscope.codescope_backend.model.ImpactResult;
 import com.codscope.codescope_backend.scanner.JavaCodeScanner;
+
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -18,6 +20,7 @@ import java.util.List;
 public class CodeScopeService {
 
     private final JavaCodeScanner scanner;
+
     private Graph graph;
     private AVLTree avlTree;
     private MaxHeap maxHeap;
@@ -27,20 +30,21 @@ public class CodeScopeService {
 
     public CodeScopeService() {
 
-        this.scanner = new JavaCodeScanner();
+        scanner = new JavaCodeScanner();
 
-        this.graph = new Graph();
-        this.avlTree = new AVLTree();
-        this.maxHeap = new MaxHeap();
-        this.navigationHistory = new NavigationHistory();
+        graph = new Graph();
+        avlTree = new AVLTree();
+        maxHeap = new MaxHeap();
+        navigationHistory = new NavigationHistory();
 
-        this.scannedClasses = new ArrayList<>();
+        scannedClasses = new ArrayList<>();
     }
 
-    //Project analysis
+    // Project scanning and analysis
     public void scanProject(String projectPath) {
 
         if (projectPath == null || projectPath.isBlank()) {
+
             throw new IllegalArgumentException(
                     "Project path cannot be empty."
             );
@@ -48,66 +52,58 @@ public class CodeScopeService {
 
         resetDataStructures();
 
-        System.out.println(
-                "\nScanning project: " + projectPath
-        );
+        scannedClasses =
+                scanner.scanProject(projectPath);
 
-        //Scan Java files and create ClassInfo objects
-        scannedClasses = scanner.scanProject(projectPath);
-
-        if (scannedClasses == null || scannedClasses.isEmpty()) {
+        if (scannedClasses == null
+                || scannedClasses.isEmpty()) {
 
             scannedClasses = new ArrayList<>();
-
-            System.out.println(
-                    "No Java classes were found."
-            );
-
             return;
         }
 
-        //Create graph nodes
+        // Build dependency graph
         graph.createNodes(scannedClasses);
 
-        //Detect and create graph dependencies
         scanner.buildDependencies(
                 scannedClasses,
                 graph
         );
 
-        //Build AVL Tree
+        // Build AVL Tree
         buildAVLTree();
 
-        //Calculate Component Risk Index
-        calculateComponentRiskIndexes();
+        // Calculate Component Risk Index
+        RiskCalculator.calculateRiskScores(
+                scannedClasses,
+                graph
+        );
 
-        //Build Max Heap after calculating CRI
+        // Build Max Heap after CRI calculation
         buildMaxHeap();
-
-        System.out.println(
-                "\nProject analysis completed."
-        );
-
-        System.out.println(
-                "Total classes: " + scannedClasses.size()
-        );
     }
 
-    // AVL Tree
+    // AVL Tree - Class Search
     private void buildAVLTree() {
 
         for (ClassInfo classInfo : scannedClasses) {
+
             avlTree.insert(classInfo);
         }
     }
 
-    public ClassInfo searchClass(String className) {
+    public ClassInfo searchClass(
+            String className
+    ) {
 
-        if (className == null || className.isBlank()) {
+        if (className == null
+                || className.isBlank()) {
+
             return null;
         }
 
-        ClassInfo result = avlTree.search(className);
+        ClassInfo result =
+                avlTree.search(className);
 
         if (result != null) {
 
@@ -119,127 +115,7 @@ public class CodeScopeService {
         return result;
     }
 
-    public void displayAVLTree() {
-        avlTree.displayInOrder();
-    }
-
-    public int getAVLTreeHeight() {
-        return avlTree.height();
-    }
-
-    // Component Risk Index
-    private void calculateComponentRiskIndexes() {
-
-        int totalClasses = scannedClasses.size();
-
-        int maxIncoming = 0;
-        int maxOutgoing = 0;
-        int maxCbo = 0;
-
-        for (ClassInfo classInfo : scannedClasses) {
-
-            int incoming = classInfo.getIncomingDependencies();
-            int outgoing = classInfo.getOutgoingDependencies();
-            int cbo = incoming + outgoing;
-
-            maxIncoming = Math.max(maxIncoming, incoming);
-            maxOutgoing = Math.max(maxOutgoing, outgoing);
-            maxCbo = Math.max(maxCbo, cbo);
-        }
-
-        for (ClassInfo classInfo : scannedClasses) {
-
-            int incoming = classInfo.getIncomingDependencies();
-            int outgoing = classInfo.getOutgoingDependencies();
-            int cbo = incoming + outgoing;
-
-            int affectedCount =
-                    graph.getAffectedClassCount(
-                            classInfo.getClassName()
-                    );
-
-            double normalizedIncoming =
-                    maxIncoming == 0
-                            ? 0
-                            : (double) incoming / maxIncoming;
-
-            double normalizedOutgoing =
-                    maxOutgoing == 0
-                            ? 0
-                            : (double) outgoing / maxOutgoing;
-
-            double normalizedCbo =
-                    maxCbo == 0
-                            ? 0
-                            : (double) cbo / maxCbo;
-
-            double normalizedReach =
-                    totalClasses <= 1
-                            ? 0
-                            : (double) affectedCount
-                            / (totalClasses - 1);
-
-            double cri = 100 * (
-                    (0.45 * normalizedIncoming)
-                            + (0.30 * normalizedReach)
-                            + (0.15 * normalizedOutgoing)
-                            + (0.10 * normalizedCbo)
-            );
-
-            cri = Math.round(cri * 100.0) / 100.0;
-
-            classInfo.setComponentRiskIndex(cri);
-        }
-    }
-
-    private double calculateComponentRiskIndex(
-            ClassInfo classInfo
-    ) {
-
-        int incoming =
-                classInfo.getIncomingDependencies();
-
-        int outgoing =
-                classInfo.getOutgoingDependencies();
-
-        return (incoming * 3.0)
-                + (outgoing * 2.0);
-    }
-
-    public void displayRiskScores() {
-
-        System.out.println(
-                "\n----- COMPONENT RISK SCORES -----\n"
-        );
-
-        for (ClassInfo classInfo : scannedClasses) {
-
-            System.out.println(
-                    "Class    : " + classInfo.getClassName()
-            );
-
-            System.out.println(
-                    "Incoming : "
-                            + classInfo.getIncomingDependencies()
-            );
-
-            System.out.println(
-                    "Outgoing : "
-                            + classInfo.getOutgoingDependencies()
-            );
-
-            System.out.println(
-                    "CRI      : "
-                            + classInfo.getComponentRiskIndex()
-            );
-
-            System.out.println(
-                    "-----------------------------------"
-            );
-        }
-    }
-
-    // Max Heap
+    //Risk Ranking
     private void buildMaxHeap() {
 
         for (ClassInfo classInfo : scannedClasses) {
@@ -260,7 +136,9 @@ public class CodeScopeService {
         return maxHeap.peekMax();
     }
 
-    public List<HeapNode> getTopRiskClasses(int count) {
+    public List<HeapNode> getTopRiskClasses(
+            int count
+    ) {
 
         if (maxHeap.isEmpty()) {
             return new ArrayList<>();
@@ -269,31 +147,23 @@ public class CodeScopeService {
         return maxHeap.getTopRiskClasses(count);
     }
 
-    public void displayHeap() {
-        maxHeap.displayHeap();
-    }
-
-    public void displayTopRiskClasses(int count) {
-        maxHeap.displayTopRiskClasses(count);
-    }
-
-    // Graph
+    // Dependency Graph
     public GraphData getGraphData() {
+
         return graph.getGraphData();
     }
 
+    // DFS - Trace dependencies
     public List<ClassInfo> getDFSResult(
             String className
     ) {
-        return graph.depthFirstSearch(className);
+
+        return graph.depthFirstSearch(
+                className
+        );
     }
 
-    public List<ClassInfo> getBFSResult(
-            String className
-    ) {
-        return graph.breadthFirstSearch(className);
-    }
-
+    // BFS - Shortest dependency path
     public List<ClassInfo> findShortestDependencyPath(
             String startClassName,
             String targetClassName
@@ -313,84 +183,70 @@ public class CodeScopeService {
         );
     }
 
+    // Change impact analysis
     public List<ImpactResult> getImpactAnalysis(
             String className
     ) {
-        return graph.impactAnalysis(className);
-    }
-    public Graph getGraph() {
-        return graph;
+
+        return graph.impactAnalysis(
+                className
+        );
     }
 
-    public void displayDependencyGraph() {
-        graph.displayGraph();
-    }
+    public boolean graphContainsClass(
+            String className
+    ) {
 
-    public void displayDependencyCounts() {
-        graph.displayDependencyCounts();
-    }
-
-    public void runDFS(String className) {
-        graph.depthFirstSearch(className);
-    }
-
-    public void runImpactAnalysis(String className) {
-        graph.impactAnalysis(className);
+        return graph.getNode(className) != null;
     }
 
     // Navigation History
-    public void openClass(String className) {
-
-        ClassInfo classInfo = searchClass(className);
-
-        if (classInfo == null) {
-            System.out.println(
-                    "Class not found: " + className
-            );
-        }
-    }
-
     public String goBack() {
+
         return navigationHistory.back();
     }
 
     public String goForward() {
+
         return navigationHistory.forward();
     }
 
     public String getCurrentClass() {
+
         return navigationHistory.currentClass();
     }
 
-    public void displayNavigationHistory() {
-        navigationHistory.showHistory();
-    }
-
     public void clearNavigationHistory() {
+
         navigationHistory.clear();
     }
 
-    // Project data
+    // Project Information
     public List<ClassInfo> getScannedClasses() {
+
         return scannedClasses;
     }
 
     public int getClassCount() {
+
         return scannedClasses.size();
     }
 
     public boolean hasLoadedProject() {
+
         return !scannedClasses.isEmpty();
     }
 
-    // Reset before scanning another project
+    // Reset
     private void resetDataStructures() {
 
         graph = new Graph();
         avlTree = new AVLTree();
         maxHeap = new MaxHeap();
-        navigationHistory = new NavigationHistory();
+        navigationHistory =
+                new NavigationHistory();
 
-        scannedClasses = new ArrayList<>();
+        scannedClasses =
+                new ArrayList<>();
     }
 }
