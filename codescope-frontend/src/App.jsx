@@ -9,7 +9,6 @@ import ClassDetails from "./components/ClassDetails";
 import RiskRanking from "./components/RiskRanking";
 import TraversalPanel from "./components/TraversalPanel";
 import ImpactAnalysis from "./components/ImpactAnalysis";
-import NavigationHistory from "./components/NavigationHistory";
 import ShortestPathPanel from "./components/ShortestPathPanel";
 
 import {
@@ -89,20 +88,26 @@ function App() {
 
   async function handleSearch(className) {
     try {
-      const result = await searchClass(className);
+      const result =
+        await searchClass(className);
 
       setSelectedClass(result);
 
-      const current = await getCurrentHistoryClass();
+      const current =
+        await getCurrentHistoryClass();
 
       setCurrentHistoryClass(current);
     } catch (error) {
       setSelectedClass(null);
 
       if (error.response?.status === 404) {
-        toast.error(`Class not found: ${className}`);
+        toast.error(
+          `Class not found: ${className}`
+        );
       } else {
-        toast.error("Class search failed.");
+        toast.error(
+          "Class search failed."
+        );
       }
     }
   }
@@ -112,12 +117,15 @@ function App() {
       return;
     }
 
-    await handleSearch(classInfo.className);
+    await handleSearch(
+      classInfo.className
+    );
   }
 
   async function handleDFS(className) {
     try {
-      const result = await runDFS(className);
+      const result =
+        await runDFS(className);
 
       setDfsResult(result || []);
     } catch {
@@ -140,7 +148,9 @@ function App() {
           targetClass
         );
 
-      setShortestPath(result || []);
+      setShortestPath(
+        result || []
+      );
     } catch (error) {
       setShortestPath([]);
 
@@ -156,12 +166,18 @@ function App() {
     }
   }
 
-  async function handleImpactAnalysis(className) {
+  async function handleImpactAnalysis(
+    className
+  ) {
     try {
       const result =
-        await getImpactAnalysis(className);
+        await getImpactAnalysis(
+          className
+        );
 
-      setImpactResults(result || []);
+      setImpactResults(
+        result || []
+      );
     } catch {
       setImpactResults(null);
 
@@ -173,9 +189,29 @@ function App() {
 
   async function handleBack() {
     try {
-      const current = await goBack();
+      const current =
+        await goBack();
 
-      setCurrentHistoryClass(current);
+      if (!current) {
+        return;
+      }
+
+      setCurrentHistoryClass(
+        current
+      );
+
+      const foundClass =
+        classes.find(
+          (classInfo) =>
+            classInfo.fullClassName ===
+            current
+        );
+
+      if (foundClass) {
+        setSelectedClass(
+          foundClass
+        );
+      }
     } catch {
       toast.error(
         "Could not move backward."
@@ -185,9 +221,29 @@ function App() {
 
   async function handleForward() {
     try {
-      const current = await goForward();
+      const current =
+        await goForward();
 
-      setCurrentHistoryClass(current);
+      if (!current) {
+        return;
+      }
+
+      setCurrentHistoryClass(
+        current
+      );
+
+      const foundClass =
+        classes.find(
+          (classInfo) =>
+            classInfo.fullClassName ===
+            current
+        );
+
+      if (foundClass) {
+        setSelectedClass(
+          foundClass
+        );
+      }
     } catch {
       toast.error(
         "Could not move forward."
@@ -199,7 +255,9 @@ function App() {
     try {
       await clearHistory();
 
-      setCurrentHistoryClass(null);
+      setCurrentHistoryClass(
+        null
+      );
 
       toast.success(
         "Navigation history cleared."
@@ -237,37 +295,42 @@ function App() {
           onScan={handleScan}
         />
 
-        <section className="two-column-layout">
-
-          <ClassSearch
-            onSearch={handleSearch}
-            disabled={classes.length === 0}
-          />
-
-          <NavigationHistory
-            currentClass={currentHistoryClass}
-            onBack={handleBack}
-            onForward={handleForward}
-            onClear={handleClearHistory}
-          />
-
-        </section>
+        <ClassSearch
+          classes={classes}
+          onSearch={handleSearch}
+          disabled={classes.length === 0}
+        />
 
         <DependencyGraph
           graphData={graphData}
-          onNodeClick={handleClassSelection}
+          onNodeClick={
+            handleClassSelection
+          }
         />
 
         <section className="two-column-layout">
 
           <ClassList
             classes={classes}
-            selectedClass={selectedClass}
-            onSelectClass={handleClassSelection}
+            selectedClass={
+              selectedClass
+            }
+            onSelectClass={
+              handleClassSelection
+            }
           />
 
           <ClassDetails
-            classInfo={selectedClass}
+            classInfo={
+              selectedClass
+            }
+            onBack={handleBack}
+            onForward={
+              handleForward
+            }
+            onClearHistory={
+              handleClearHistory
+            }
           />
 
         </section>
@@ -275,9 +338,15 @@ function App() {
         <section className="three-column-layout">
 
           <RiskRanking
-            highestRisk={highestRisk}
-            topRiskClasses={topRiskClasses}
-            onSelectClass={handleClassSelection}
+            highestRisk={
+              highestRisk
+            }
+            topRiskClasses={
+              topRiskClasses
+            }
+            onSelectClass={
+              handleClassSelection
+            }
           />
 
           <TraversalPanel
@@ -285,22 +354,26 @@ function App() {
             onDFS={handleDFS}
             dfsResult={dfsResult}
           />
+
           <ImpactAnalysis
             classes={classes}
-            results={impactResults}
+            results={
+              impactResults
+            }
             onAnalyze={
               handleImpactAnalysis
             }
           />
+
           <ShortestPathPanel
             classes={classes}
             onFindShortestPath={
               handleFindShortestPath
             }
-            shortestPath={shortestPath}
+            shortestPath={
+              shortestPath
+            }
           />
-
-          
 
         </section>
 
