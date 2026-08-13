@@ -22,84 +22,98 @@ public class RiskCalculator {
             return;
         }
 
-        int totalClasses = classes.size();
+        int totalClasses =
+                classes.size();
 
         int maxIncoming = 0;
-        int maxOutgoing = 0;
         int maxCbo = 0;
 
         // Find maximum values for normalization
         for (ClassInfo classInfo : classes) {
 
             int incoming =
-                    classInfo.getIncomingDependencies();
-
-            int outgoing =
-                    classInfo.getOutgoingDependencies();
+                    classInfo
+                            .getIncomingDependencies();
 
             int cbo =
-                    incoming + outgoing;
+                    graph.getCBO(
+                            classInfo.getClassName()
+                    );
 
             maxIncoming =
-                    Math.max(maxIncoming, incoming);
-
-            maxOutgoing =
-                    Math.max(maxOutgoing, outgoing);
+                    Math.max(
+                            maxIncoming,
+                            incoming
+                    );
 
             maxCbo =
-                    Math.max(maxCbo, cbo);
+                    Math.max(
+                            maxCbo,
+                            cbo
+                    );
         }
 
         // Calculate CRI for each class
         for (ClassInfo classInfo : classes) {
 
             int incoming =
-                    classInfo.getIncomingDependencies();
+                    classInfo
+                            .getIncomingDependencies();
 
-            int outgoing =
-                    classInfo.getOutgoingDependencies();
-
+            // Number of distinct classes coupled
+            // with this class
             int cbo =
-                    incoming + outgoing;
+                    graph.getCBO(
+                            classInfo.getClassName()
+                    );
 
+            // Number of classes that could be
+            // affected if this class changes
             int affectedCount =
                     graph.getAffectedClassCount(
                             classInfo.getClassName()
                     );
 
+            // Normalize incoming dependencies
             double normalizedIncoming =
                     maxIncoming == 0
                             ? 0
-                            : (double) incoming / maxIncoming;
+                            : (double) incoming
+                            / maxIncoming;
 
-            double normalizedOutgoing =
-                    maxOutgoing == 0
-                            ? 0
-                            : (double) outgoing / maxOutgoing;
-
+            // Normalize CBO
             double normalizedCbo =
                     maxCbo == 0
                             ? 0
-                            : (double) cbo / maxCbo;
+                            : (double) cbo
+                            / maxCbo;
 
+            // Normalize affected-class reach
             double normalizedReach =
                     totalClasses <= 1
                             ? 0
                             : (double) affectedCount
                             / (totalClasses - 1);
 
+            // Calculate Component Risk Index
             double cri =
                     100 * (
-                            (0.45 * normalizedIncoming)
+                            (0.50 * normalizedIncoming)
                                     + (0.30 * normalizedReach)
-                                    + (0.15 * normalizedOutgoing)
-                                    + (0.10 * normalizedCbo)
+                                    + (0.20 * normalizedCbo)
                     );
 
+            // Round CRI to 2 decimal places
             cri =
-                    Math.round(cri * 100.0) / 100.0;
+                    Math.round(
+                            cri * 100.0
+                    ) / 100.0;
 
-            classInfo.setComponentRiskIndex(cri);
+            // Store calculated CRI
+            classInfo
+                    .setComponentRiskIndex(
+                            cri
+                    );
         }
     }
 }

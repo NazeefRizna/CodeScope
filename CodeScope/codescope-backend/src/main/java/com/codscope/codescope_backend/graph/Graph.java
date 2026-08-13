@@ -294,36 +294,6 @@ public class Graph {
         return shortestPath;
     }
 
-    // Impact Analysis
-    public List<ImpactResult> impactAnalysis(
-            String changedClassName
-    ) {
-
-        GraphNode changedNode =
-                getNode(changedClassName);
-
-        if (changedNode == null) {
-            return new ArrayList<>();
-        }
-
-        ArrayList<GraphNode> visited =
-                new ArrayList<>();
-
-        List<ImpactResult> results =
-                new ArrayList<>();
-
-        visited.add(changedNode);
-
-        findAffectedClasses(
-                changedNode,
-                visited,
-                results,
-                1
-        );
-
-        return results;
-    }
-
     private void findAffectedClasses(
             GraphNode changedNode,
             ArrayList<GraphNode> visited,
@@ -433,5 +403,142 @@ public class Graph {
                 );
             }
         }
+    }
+
+    public int getCBO(String className) {
+
+        GraphNode targetNode =
+                getNode(className);
+
+        if (targetNode == null) {
+            return 0;
+        }
+
+        ArrayList<GraphNode> coupledClasses =
+                new ArrayList<>();
+
+        // Classes that this class depends on
+        for (GraphNode dependency :
+                targetNode.getDependencies()) {
+
+            if (!coupledClasses.contains(
+                    dependency
+            )) {
+
+                coupledClasses.add(
+                        dependency
+                );
+            }
+        }
+
+        // Classes that depend on this class
+        for (GraphNode node : nodes) {
+
+            if (node == targetNode) {
+                continue;
+            }
+
+            if (node
+                    .getDependencies()
+                    .contains(targetNode)
+                    && !coupledClasses.contains(node)) {
+
+                coupledClasses.add(node);
+            }
+        }
+
+        return coupledClasses.size();
+    }
+
+    public List<ImpactResult> impactAnalysis(
+            String changedClassName
+    ) {
+
+        GraphNode changedNode =
+                getNode(changedClassName);
+
+        if (changedNode == null) {
+            return new ArrayList<>();
+        }
+
+        ArrayList<GraphNode> visited =
+                new ArrayList<>();
+
+        ArrayList<GraphNode> queue =
+                new ArrayList<>();
+
+        ArrayList<Integer> levels =
+                new ArrayList<>();
+
+        List<ImpactResult> results =
+                new ArrayList<>();
+
+        // Start BFS from changed class
+        visited.add(changedNode);
+        queue.add(changedNode);
+        levels.add(0);
+
+        int front = 0;
+
+        while (front < queue.size()) {
+
+            GraphNode current =
+                    queue.get(front);
+
+            int currentLevel =
+                    levels.get(front);
+
+            front++;
+
+            // Find classes that depend on current class
+            for (GraphNode possibleAffectedNode : nodes) {
+
+                boolean dependsOnCurrent =
+                        possibleAffectedNode
+                                .getDependencies()
+                                .contains(current);
+
+                if (dependsOnCurrent
+                        && !visited.contains(
+                        possibleAffectedNode
+                )) {
+
+                    int impactLevel =
+                            currentLevel + 1;
+
+                    visited.add(
+                            possibleAffectedNode
+                    );
+
+                    queue.add(
+                            possibleAffectedNode
+                    );
+
+                    levels.add(
+                            impactLevel
+                    );
+
+                    ClassInfo info =
+                            possibleAffectedNode
+                                    .getClassInfo();
+
+                    String impactType =
+                            impactLevel == 1
+                                    ? "Direct"
+                                    : "Indirect";
+
+                    results.add(
+                            new ImpactResult(
+                                    info.getClassName(),
+                                    info.getFullClassName(),
+                                    impactType,
+                                    impactLevel
+                            )
+                    );
+                }
+            }
+        }
+
+        return results;
     }
 }
