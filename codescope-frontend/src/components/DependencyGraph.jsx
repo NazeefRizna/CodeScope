@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import dagre from "@dagrejs/dagre";
 import { toPng } from "html-to-image";
 import { jsPDF } from "jspdf";
@@ -60,6 +60,7 @@ function createGraphLayout(nodes, edges) {
 
   const layoutedNodes =
     nodes.map((node) => {
+
       const position =
         dagreGraph.node(node.id);
 
@@ -96,6 +97,10 @@ function DependencyGraphContent({
   graphData,
   onNodeClick,
 }) {
+
+  const [selectedEdge, setSelectedEdge] =
+    useState(null);
+
   const {
     getNodes,
   } = useReactFlow();
@@ -106,10 +111,12 @@ function DependencyGraphContent({
       const rawNodes =
         (graphData?.nodes || []).map(
           (classInfo) => ({
+
             id:
               classInfo.fullClassName,
 
             data: {
+
               label: (
                 <div className="graph-node-content">
 
@@ -160,12 +167,17 @@ function DependencyGraphContent({
               width: NODE_WIDTH,
               minHeight:
                 NODE_HEIGHT,
+
               padding: 12,
+
               borderRadius: 12,
+
               border:
                 "1px solid #94a3b8",
+
               background:
                 "#ffffff",
+
               boxShadow:
                 "0 5px 14px rgba(15, 23, 42, 0.10)",
             },
@@ -175,6 +187,7 @@ function DependencyGraphContent({
       const rawEdges =
         (graphData?.edges || []).map(
           (edge, index) => ({
+
             id:
               `${edge.source}-${edge.target}-${index}`,
 
@@ -190,6 +203,7 @@ function DependencyGraphContent({
             markerEnd: {
               type:
                 MarkerType.ArrowClosed,
+
               width: 20,
               height: 20,
             },
@@ -197,6 +211,7 @@ function DependencyGraphContent({
             style: {
               stroke:
                 "#334155",
+
               strokeWidth: 2,
             },
           })
@@ -237,13 +252,47 @@ function DependencyGraphContent({
       initialGraph.edges
     );
 
+    setSelectedEdge(null);
+
   }, [
     initialGraph,
     setNodes,
     setEdges,
   ]);
 
+  function handleEdgeClick(
+    _,
+    edge
+  ) {
+
+    const sourceClass =
+      graphData.nodes.find(
+        (classInfo) =>
+          classInfo.fullClassName ===
+          edge.source
+      );
+
+    const targetClass =
+      graphData.nodes.find(
+        (classInfo) =>
+          classInfo.fullClassName ===
+          edge.target
+      );
+
+    if (!sourceClass ||
+        !targetClass) {
+
+      return;
+    }
+
+    setSelectedEdge({
+      sourceClass,
+      targetClass,
+    });
+  }
+
   async function downloadGraphAsPDF() {
+
     try {
 
       const currentNodes =
@@ -261,9 +310,6 @@ function DependencyGraphContent({
           currentNodes
         );
 
-      /*
-       * Give the exported graph some padding.
-       */
       const padding = 80;
 
       const exportWidth =
@@ -280,10 +326,6 @@ function DependencyGraphContent({
           600
         );
 
-      /*
-       * Calculate the viewport needed
-       * to display the complete graph.
-       */
       const viewport =
         getViewportForBounds(
           bounds,
@@ -303,14 +345,11 @@ function DependencyGraphContent({
         return;
       }
 
-      /*
-       * Export the entire viewport,
-       * not only what is currently visible.
-       */
       const dataUrl =
         await toPng(
           viewportElement,
           {
+
             backgroundColor:
               "#ffffff",
 
@@ -323,6 +362,7 @@ function DependencyGraphContent({
             pixelRatio: 2,
 
             style: {
+
               width:
                 `${exportWidth}px`,
 
@@ -338,10 +378,6 @@ function DependencyGraphContent({
           }
         );
 
-      /*
-       * Landscape is usually better
-       * for dependency graphs.
-       */
       const orientation =
         exportWidth >
         exportHeight
@@ -350,12 +386,16 @@ function DependencyGraphContent({
 
       const pdf =
         new jsPDF({
+
           orientation,
+
           unit: "px",
+
           format: [
             exportWidth,
             exportHeight,
           ],
+
           hotfixes: [
             "px_scaling",
           ],
@@ -387,6 +427,7 @@ function DependencyGraphContent({
     !graphData ||
     graphData.nodes?.length === 0
   ) {
+
     return (
       <section className="panel">
 
@@ -415,9 +456,10 @@ function DependencyGraphContent({
           </h2>
 
           <p className="muted">
-            Drag nodes to rearrange the
-            graph and click a class to
-            view its details.
+            Drag nodes to rearrange the graph,
+            click a class to view its details,
+            or click a dependency edge to view
+            the relationship.
           </p>
 
         </div>
@@ -453,27 +495,42 @@ function DependencyGraphContent({
         <ReactFlow
           nodes={nodes}
           edges={edges}
+
           onNodesChange={
             onNodesChange
           }
+
           onEdgesChange={
             onEdgesChange
           }
+
           nodesDraggable={true}
+
           nodesConnectable={false}
+
           elementsSelectable={true}
+
           fitView
+
           fitViewOptions={{
             padding: 0.25,
           }}
+
           minZoom={0.2}
+
           maxZoom={1.8}
+
           onNodeClick={
             (_, node) => {
+
               onNodeClick?.(
                 node.data.classInfo
               );
             }
+          }
+
+          onEdgeClick={
+            handleEdgeClick
           }
         >
 
@@ -488,16 +545,134 @@ function DependencyGraphContent({
 
       </div>
 
+      {selectedEdge && (
+
+        <div
+          className="edge-popup-overlay"
+          onClick={() =>
+            setSelectedEdge(null)
+          }
+        >
+
+          <div
+            className="edge-popup"
+            onClick={(event) =>
+              event.stopPropagation()
+            }
+          >
+
+            <div className="edge-popup-header">
+
+              <h3>
+                Dependency Relationship
+              </h3>
+
+              <button
+                type="button"
+                className="edge-popup-close"
+                onClick={() =>
+                  setSelectedEdge(null)
+                }
+              >
+                ×
+              </button>
+
+            </div>
+
+            <div className="edge-class">
+
+              <span>
+                Source class
+              </span>
+
+              <strong>
+                {
+                  selectedEdge
+                    .sourceClass
+                    .className
+                }
+              </strong>
+
+              <small>
+                {
+                  selectedEdge
+                    .sourceClass
+                    .packageName ||
+                  "Default package"
+                }
+              </small>
+
+            </div>
+
+            <div className="edge-arrow">
+              ↓ depends on
+            </div>
+
+            <div className="edge-class">
+
+              <span>
+                Target class
+              </span>
+
+              <strong>
+                {
+                  selectedEdge
+                    .targetClass
+                    .className
+                }
+              </strong>
+
+              <small>
+                {
+                  selectedEdge
+                    .targetClass
+                    .packageName ||
+                  "Default package"
+                }
+              </small>
+
+            </div>
+
+            <p className="edge-description">
+
+              <strong>
+                {
+                  selectedEdge
+                    .sourceClass
+                    .className
+                }
+              </strong>
+
+              {" "}depends on{" "}
+
+              <strong>
+                {
+                  selectedEdge
+                    .targetClass
+                    .className
+                }
+              </strong>.
+
+            </p>
+
+          </div>
+
+        </div>
+      )}
+
     </section>
   );
 }
 
 function DependencyGraph(props) {
+
   return (
     <ReactFlowProvider>
+
       <DependencyGraphContent
         {...props}
       />
+
     </ReactFlowProvider>
   );
 }
