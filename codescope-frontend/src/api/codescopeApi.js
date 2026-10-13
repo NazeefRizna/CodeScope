@@ -1,17 +1,15 @@
+
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:8081/api/codescope",
+  baseURL: "https://codescope-a357f.containers.snapdeploy.app/api/codescope",
   timeout: 60000,
 });
 
 export async function scanProject(projectPath) {
   const response = await api.post("/scan", null, {
-    params: {
-      projectPath,
-    },
+    params: { projectPath },
   });
-
   return response.data;
 }
 
@@ -22,22 +20,18 @@ export async function getAllClasses() {
 
 export async function getGraphData() {
   const response = await api.get("/graph");
-
-  return (
-    response.data || {
-      nodes: [],
-      edges: [],
-      nodeCount: 0,
-      edgeCount: 0,
-    }
-  );
+  return response.data || {
+    nodes: [],
+    edges: [],
+    nodeCount: 0,
+    edgeCount: 0,
+  };
 }
 
 export async function searchClass(className) {
   const response = await api.get(
     `/classes/search/${encodeURIComponent(className)}`
   );
-
   return response.data;
 }
 
@@ -50,7 +44,6 @@ export async function getTopRiskClasses(count = 5) {
   const response = await api.get("/risk/top", {
     params: { count },
   });
-
   return response.data || [];
 }
 
@@ -58,7 +51,6 @@ export async function runDFS(className) {
   const response = await api.get(
     `/graph/dfs/${encodeURIComponent(className)}`
   );
-
   return response.data || [];
 }
 
@@ -66,7 +58,6 @@ export async function runBFS(className) {
   const response = await api.get(
     `/graph/bfs/${encodeURIComponent(className)}`
   );
-
   return response.data || [];
 }
 
@@ -74,25 +65,22 @@ export async function getImpactAnalysis(className) {
   const response = await api.get(
     `/impact/${encodeURIComponent(className)}`
   );
-
   return response.data || [];
 }
+
 export async function findShortestDependencyPath(
   startClass,
   targetClass
 ) {
-  const response = await api.get(
-    "/graph/shortest-path",
-    {
-      params: {
-        start: startClass,
-        target: targetClass,
-      },
-    }
-  );
-
+  const response = await api.get("/graph/shortest-path", {
+    params: {
+      start: startClass,
+      target: targetClass,
+    },
+  });
   return response.data;
 }
+
 export async function getCurrentHistoryClass() {
   const response = await api.get("/history/current");
   return response.data || null;
